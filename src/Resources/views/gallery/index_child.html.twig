@@ -1,0 +1,116 @@
+{% extends '@AmzsCore/base.html.twig' %}
+
+{% block title %}CMS - Gallery Management{% endblock %}
+
+{% block toolbar %}
+    {% embed '@AmzsCore/Layout/_toolbar.html.twig' %}
+
+        {% block toolbar_title %}
+            Gallery Management
+        {% endblock %}
+
+        {% block toolbar_breadcrumbs %}
+            <li class="breadcrumb-item text-muted">
+                <a href="#" class="text-muted text-hover-primary">Gallery</a>
+            </li>
+        {% endblock %}
+
+        {% block toolbar_button_actions %}
+            <a href="{{ path('amzs_admin_gallery_add_child_route', {
+                parentId: gallery.id
+            }) }}"
+               data-amz-btn-open-modal
+               class="btn btn-sm fw-bold btn-primary">
+                Create Child
+            </a>
+        {% endblock %}
+
+    {% endembed %}
+{% endblock %}
+
+{% block body %}
+    {#    <div class="mb-3"> #}
+    {#        <select id="kt_amz_language_select" class="form-select form-select-sm w-150px"> #}
+    {#            {% for locale in locales %} #}
+    {#                <option value="{{ locale }}">{{ locale }}</option> #}
+    {#            {% endfor %} #}
+    {#        </select> #}
+    {#    </div> #}
+
+    {% embed '@AmzsCore/Components/Table/base.html.twig' %}
+    {% endembed %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        "use strict";
+
+        $(function () {
+
+            KTModalForm.registerCallback(function ($modalEl) {
+                console.log("Gallery Form Loaded/Reloaded");
+            });
+
+            KTAmzDataTable.init({
+                ajaxUrl: "{{ path('amzs_admin_gallery_child_data_route', {'parentId': gallery.id}) }}",
+                columns: [
+                    {
+                        data: null,
+                        title: 'Actions',
+                        width: '140px',
+                        orderable: false,
+                        render: function (data, type, row) {
+
+                            const editUrl = "{{ path(amzs_admin_gallery_edit_route, {'id':'__ID__'}) }}"
+                                .replace('__ID__', row.id);
+
+                            const childUrl = "{{ path(amzs_admin_gallery_child_route, {'parentId':'__ID__'}) }}"
+                                .replace('__ID__', row.id);
+
+                            const deleteUrl = "{{ path(amzs_admin_gallery_delete_route, {
+                                'id':'__ID__',
+                                '_csrf_token':'__CSRF_TOKEN__'
+                            }) }}"
+                                .replace('__ID__', row.id)
+                                .replace('__CSRF_TOKEN__', row._csrf_token);
+
+                            return `
+                                    <a href="${editUrl}"
+                                       data-amz-btn-open-modal
+                                       class="btn btn-icon btn-active-light-primary w-30px h-30px me-2">
+                                        <span data-bs-toggle="tooltip" title="Edit">
+                                            {{ icon('edit') }}
+                                        </span>
+                                    </a>
+
+                                    <a href="${childUrl}"
+                                       class="btn btn-icon btn-active-light-primary w-30px h-30px me-2">
+                                        <span data-bs-toggle="tooltip" title="Children">
+                                            {{ icon('eye') }}
+                                        </span>
+                                    </a>
+
+                                    <a href="${deleteUrl}"
+                                       data-amz-btn-remove
+                                       class="btn btn-icon btn-active-light-primary w-30px h-30px">
+                                        <span data-bs-toggle="tooltip" title="Delete">
+                                            {{ icon('delete') }}
+                                        </span>
+                                    </a>
+                                `;
+                        }
+                    },
+
+                    {data: 'index', title: 'ID', width: '50px'},
+                    {data: 'name', title: 'Name'},
+                    {data: 'created_at', title: 'Created At'},
+                    {data: 'updated_at', title: 'Updated At'}
+                ]
+            });
+
+        });
+    </script>
+
+{% endblock %}

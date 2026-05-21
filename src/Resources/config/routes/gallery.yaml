@@ -1,0 +1,47 @@
+amzs_admin_gallery_index_route:
+  path: /
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::index
+  methods: [GET]
+
+amzs_admin_gallery_data_route:
+  path: /data
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::data
+  methods: [GET]
+
+amzs_admin_gallery_add_route:
+  path: /add
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::add
+  methods: [GET, POST]
+
+amzs_admin_gallery_edit_route:
+  path: /edit/{id}
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::edit
+  methods: [GET, POST]
+  requirements:
+    id: '[1-9]\d*|__ID__'
+
+amzs_admin_gallery_delete_route:
+  path: /delete/{id}
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::delete
+  methods: [POST, DELETE]
+  requirements:
+    id: '[1-9]\d*|__ID__'
+amzs_admin_gallery_child_route:
+  path: /children/{parentId}
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::children
+  methods: [GET]
+  requirements:
+    parentId: '[1-9]\d*|__ID__'
+
+amzs_admin_gallery_child_data_route:
+  path: /children/{parentId}/data
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::dataChild
+  methods: [GET]
+  requirements:
+    parentId: '[1-9]\d*|__ID__'
+amzs_admin_gallery_add_child_route:
+  path: /children/{parentId}/add
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::addChild
+  methods: [GET, POST]
+  requirements:
+    parentId: '[1-9]\d*|__ID__'

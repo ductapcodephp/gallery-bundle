@@ -1,0 +1,17 @@
+services:
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true
+
+  AmzsCMS\GalleryBundle\:
+    resource: '../../../src/'
+    exclude:
+      - '../../DependencyInjection/'
+      - '../../Kernel.php'
+      - '../../Enum/'
+      - '../../Traits/'
+      - '../../AmzsGalleryBundle.php'
+
+  AmzsCMS\GalleryBundle\Routing\AmzsGalleryLoader:
+    tags: [ routing.loader ]
+

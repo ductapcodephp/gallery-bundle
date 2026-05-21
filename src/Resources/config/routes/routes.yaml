@@ -1,0 +1,3 @@
+amzs_admin_gallery_bundle:
+  resource: "@AmzsGalleryBundle/Resources/config/routes/gallery.yaml"
+  prefix:   /gallery

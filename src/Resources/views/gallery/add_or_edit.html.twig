@@ -1,0 +1,12 @@
+{% embed '@AmzsCore/Components/Modal/base.html.twig' with {
+    title: 'Gallery',
+    modalDialogCss: 'mw-650px',
+    modalBodyCss: 'modal-body mx-3 mx-xl-12 pt-0 pb-5'
+} %}
+    {% block description %}{% endblock %}
+    {% block body %}
+        {{ form_start(form) }}
+        {{ form_rest(form) }}
+        {{ form_end(form) }}
+    {% endblock %}
+{% endembed %}
