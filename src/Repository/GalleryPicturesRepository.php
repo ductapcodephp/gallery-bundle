@@ -2,29 +2,18 @@
 
 namespace AmzsCMS\GalleryBundle\Repository;
 
-
-use AmzsCMS\GalleryBundle\Entity\Gallery;
+use AmzsCMS\GalleryBundle\Entity\GalleryPictures;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Gallery>
+ * @extends ServiceEntityRepository<GalleryPictures>
  */
-class GalleryRepository extends ServiceEntityRepository
+class GalleryPicturesRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Gallery::class);
-    }
-
-    public function getAllGalleriesRoot()
-    {
-        return $this->createQueryBuilder('g')
-            ->where('g.parent IS NULL')
-            ->andWhere('g.type = :type')
-            ->setParameter('type','folder')
-            ->getQuery()
-            ->getResult();
+        parent::__construct($registry, GalleryPictures::class);
     }
 
     //    /**
@@ -51,19 +40,4 @@ class GalleryRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
-
-    // lay danh sach gallery voi type la post (default val cms)
-    public function getPaginated(?string $keyword, $type, $filters = []): \Doctrine\ORM\QueryBuilder
-    {
-        $qb = $this->createQueryBuilder('gallery');
-        $qb->where('gallery.type = :type');
-        $qb->setParameter('type', $type);
-
-        if(!empty($keyword)) {
-            $qb->andWhere('gallery.name LIKE :keyword');
-            $qb->setParameter('keyword', '%'.$keyword.'%');
-        }
-
-        return $qb;
-    }
 }

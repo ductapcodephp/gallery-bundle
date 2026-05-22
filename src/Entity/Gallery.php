@@ -3,6 +3,7 @@
 namespace AmzsCMS\GalleryBundle\Entity;
 
 use AmzsCMS\CoreBundle\Traits\Doctrine\Timestampable;
+use AmzsCMS\GalleryBundle\Traits\DoctrineIdentifierTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
@@ -17,14 +18,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
  */
 class Gallery
 {
-    use Timestampable;
-    /**
-     * @ORM\Column(type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private  $id;
-
+    use DoctrineIdentifierTrait, Timestampable;
 
     /**
      * @ORM\Column(type="string", nullable=true)
@@ -127,13 +121,6 @@ class Gallery
         return $this->name ?? '';
     }
 
-    /**
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
 
     public function getName(): ?string
     {

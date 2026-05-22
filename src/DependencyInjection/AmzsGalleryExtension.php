@@ -33,12 +33,9 @@ class AmzsGalleryExtension extends Extension implements PrependExtensionInterfac
         $container->prependExtensionConfig('twig', [
             'globals' => [
                 'amzs_admin_gallery_index_route'=> GalleryRoute::INDEX,
-                'amzs_admin_gallery_data_route'=> GalleryRoute::DATA,
                 'amzs_admin_gallery_add_route'=> GalleryRoute::ADD,
                 'amzs_admin_gallery_edit_route'=> GalleryRoute::EDIT,
                 'amzs_admin_gallery_delete_route'=> GalleryRoute::DELETE,
-                'amzs_admin_gallery_child_route'=> GalleryRoute::CHILDREN,
-                'amzs_admin_gallery_child_data_route'=> GalleryRoute::DATA_CHILDREN,
 
             ],
         ]);

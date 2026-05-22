@@ -2,29 +2,26 @@
 
 namespace AmzsCMS\GalleryBundle\Repository;
 
-
 use AmzsCMS\GalleryBundle\Entity\Gallery;
+use AmzsCMS\GalleryBundle\Entity\Picture;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Gallery>
+ * @extends ServiceEntityRepository<Picture>
  */
-class GalleryRepository extends ServiceEntityRepository
+class PictureRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Gallery::class);
+        parent::__construct($registry, Picture::class);
     }
 
-    public function getAllGalleriesRoot()
+    public function findByGallery(Gallery $gallery)
     {
-        return $this->createQueryBuilder('g')
-            ->where('g.parent IS NULL')
-            ->andWhere('g.type = :type')
-            ->setParameter('type','folder')
-            ->getQuery()
-            ->getResult();
+        return $this->createQueryBuilder('p')
+            ->where('p.gallery = :gallery and p.isArchived = false')
+            ->setParameter('gallery', $gallery)->getQuery()->getResult();
     }
 
     //    /**
@@ -52,18 +49,14 @@ class GalleryRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    // lay danh sach gallery voi type la post (default val cms)
-    public function getPaginated(?string $keyword, $type, $filters = []): \Doctrine\ORM\QueryBuilder
+    public function findAllPicture($search)
     {
-        $qb = $this->createQueryBuilder('gallery');
-        $qb->where('gallery.type = :type');
-        $qb->setParameter('type', $type);
-
-        if(!empty($keyword)) {
-            $qb->andWhere('gallery.name LIKE :keyword');
-            $qb->setParameter('keyword', '%'.$keyword.'%');
+        $qb = $this->createQueryBuilder('p');
+        $qb->where('p.isArchived = false');
+        if(!empty($search)){
+            $qb->andWhere('p.name LIKE :title or p.originalName LIKE :title');
+            $qb->setParameter('title', '%'.$search.'%');
         }
-
         return $qb;
     }
 }

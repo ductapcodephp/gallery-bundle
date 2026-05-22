@@ -2,9 +2,13 @@
 
 {% block title %}CMS - Gallery Management{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset(get_path_gallery_cms_asset() ~ 'assets/css/gallery.css') }}">
+{% endblock %}
+
 {% block toolbar %}
     {% embed '@AmzsCore/Layout/_toolbar.html.twig' %}
-
         {% block toolbar_title %}
             Gallery Management
         {% endblock %}
@@ -16,94 +20,99 @@
         {% endblock %}
 
         {% block toolbar_button_actions %}
-            <a href="{{ path(amzs_admin_gallery_add_route) }}"
-               data-amz-btn-open-modal
-               class="btn btn-sm fw-bold btn-primary">
-                Create
-            </a>
-        {% endblock %}
 
+        {% endblock %}
     {% endembed %}
 {% endblock %}
 
 {% block body %}
-{#    <div class="mb-3">#}
-{#        <select id="kt_amz_language_select" class="form-select form-select-sm w-150px">#}
-{#            {% for locale in locales %}#}
-{#                <option value="{{ locale }}">{{ locale }}</option>#}
-{#            {% endfor %}#}
-{#        </select>#}
-{#    </div>#}
+    {# Bọc toàn bộ vùng quản lý tệp tin vào Turbo Frame #}
+    <turbo-frame id="media_library_spa" data-current-folder="{{ currentFolderId }}">
+        <div class="media-manager-wrapper card shadow-sm">
 
-    {% embed '@AmzsCore/Components/Table/base.html.twig' %}
-    {% endembed %}
+            {# 1. THANH BREADCRUMBS ĐỘNG #}
+            <div class="manager-toolbar d-flex flex-wrap align-items-center justify-content-between p-6 border-bottom">
+                <div class="breadcrumbs" id="breadcrumbsContainer">
+                    {% for crumb in breadcrumbs %}
+                        {% if loop.last %}
+                            <span class="crumb active">
+                                {% if loop.first %}<i class="ti ti-home"></i> {% endif %}{{ crumb.name }}
+                            </span>
+                        {% else %}
+                            <a href="{{ path('amzs_admin_gallery_index_route', { folderId: crumb.id }) }}" class="crumb text-hover-primary text-dark">
+                                {% if loop.first %}<i class="ti ti-home"></i> {% endif %}{{ crumb.name }}
+                            </a>
+                            <span class="crumb-separator"><i class="ti ti-chevron-right"></i></span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="toolbar-actions d-flex gap-2">
+                    <button class="btn btn-sm btn-light-primary" id="btnCreateFolder"><i class="ti ti-folder-plus fs-5"></i> Tạo thư mục mới</button>
+                    <button class="btn btn-sm btn-dark" id="btnUploadImg"><i class="ti ti-cloud-upload fs-5"></i> Tải ảnh lên</button>
+                </div>
+            </div>
+
+            {# 2. LƯỚI DANH SÁCH FILE & FOLDER #}
+            <div class="manager-body p-6 bg-light-opacity">
+                <div class="gallery-grid" id="galleryGrid">
+
+                    {# Nút quay lại (..) nếu đang ở thư mục con #}
+                    {% if currentFolderId > 0 %}
+                        {# ID của thư mục cha là ID của phần tử kế cuối trong mảng breadcrumbs #}
+                        {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
+                        <a href="{{ path('amzs_admin_gallery_index_route', { folderId: parentFolderId }) }}" class="col-folder text-decoration-none">
+                            <div class="folder-item-card root-card">
+                                <i class="ti ti-arrow-back-up"></i>
+                                <div class="folder-card-name">.. (Quay lại)</div>
+                            </div>
+                        </a>
+                    {% endif %}
+
+                    {# Render danh sách Thư mục con #}
+                    {% for folder in folders %}
+                        <a href="{{ path('amzs_admin_gallery_index_route', { folderId: folder.id }) }}" class="col-folder text-decoration-none text-dark">
+                            <div class="folder-item-card">
+                                <i class="ti ti-folder-filled"></i>
+                                <div class="folder-card-name">{{ folder.name }}</div>
+                            </div>
+                        </a>
+                    {% endfor %}
+
+                    {# Render danh sách Hình ảnh #}
+                    {% for img in pictures %}
+                        <div class="col-img" data-id="{{ img.id }}">
+                            <div class="gallery-item">
+                                <div class="select-badge"><i class="ti ti-check" style="font-size:12px"></i></div>
+                                <img src="{{ asset(img.url) }}" alt="{{ img.name }}" loading="lazy">
+                                <div class="img-name">{{ img.name }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    {% if folders is empty and pictures is empty %}
+                        <div class="w-100 text-center p-10 text-muted">Thư mục này trống rỗng.</div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            {# 3. THANH FOOTER TRẠNG THÁI #}
+            <div class="manager-foot d-flex align-items-center justify-content-between p-6 border-top bg-white">
+                <span class="count-badge" id="selectedCount">Đã chọn: 0 ảnh</span>
+                <div class="foot-actions d-flex gap-2">
+                    <button class="btn btn-secondary btn-sm" id="btnDeselectAll" disabled><i class="ti ti-x"></i> Bỏ chọn tất cả</button>
+                    <button class="btn btn-light-danger btn-sm" id="btnDeleteSelected" disabled><i class="ti ti-trash"></i> Xóa ảnh đã chọn</button>
+                    <button class="btn btn-primary btn-sm" id="btnConfirmSelect" disabled><i class="ti ti-check"></i> Áp dụng ảnh đã chọn (<span class="count">0</span>)</button>
+                </div>
+            </div>
+
+        </div>
+    </turbo-frame>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-
-    <script>
-        "use strict";
-
-        $(function () {
-
-            KTModalForm.registerCallback(function ($modalEl) {
-                console.log("Gallery Form Loaded/Reloaded");
-            });
-
-            KTAmzDataTable.init({
-                ajaxUrl: "{{ path(amzs_admin_gallery_data_route) }}",
-                columns: [
-                    {
-                        data: null,
-                        title: 'Actions',
-                        width: '140px',
-                        orderable: false,
-                        render: function (data, type, row) {
-
-                            const editUrl = "{{ path(amzs_admin_gallery_edit_route, {'id':'__ID__'}) }}"
-                                .replace('__ID__', row.id);
-
-                            const childUrl = "{{ path(amzs_admin_gallery_child_route, {'parentId':'__ID__'}) }}"
-                                .replace('__ID__', row.id);
-                            const deleteUrl = "{{ path(amzs_admin_gallery_delete_route, {'id':'__ID__', '_csrf_token':'__CSRF_TOKEN__'}) }}"
-                                .replace('__ID__', row.id)
-                                .replace('__CSRF_TOKEN__', row._csrf_token);
-
-                            return `
-                                <a href="${editUrl}"
-                                   data-amz-btn-open-modal
-                                   class="btn btn-icon btn-active-light-primary w-30px h-30px me-2">
-                                    <span data-bs-toggle="tooltip" title="Edit">
-                                        {{ icon('edit') }}
-                                    </span>
-                                </a>
-
-                              <a href="${childUrl}" class="btn btn-icon btn-active-light-primary w-30px h-30px me-2">
-                                    <span data-bs-toggle="tooltip" title="View Children">
-                                        {{ icon('eye') }}
-                                    </span>
-                                </a>
-
-                                <a href="${deleteUrl}"
-                                   data-amz-btn-remove
-                                   class="btn btn-icon btn-active-light-primary w-30px h-30px">
-                                    <span data-bs-toggle="tooltip" title="Delete">
-                                        {{ icon('delete') }}
-                                    </span>
-                                </a>
-                            `;
-                        }
-                    },
-
-                    { data: 'index', title: 'ID', width: '50px' },
-                    { data: 'name', title: 'Name' },
-                    { data: 'created_at', title: 'Created At' },
-                    { data: 'updated_at', title: 'Updated At' }
-                ]
-            });
-
-        });
-    </script>
-
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"></script>
+    <script src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery2.js') }}"></script>
 {% endblock %}
