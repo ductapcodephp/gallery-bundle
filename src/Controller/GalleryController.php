@@ -5,6 +5,7 @@ use AmzsCMS\GalleryBundle\Constant\GalleryRoute;
 use AmzsCMS\GalleryBundle\Entity\Gallery;
 use AmzsCMS\GalleryBundle\Entity\Picture;
 use AmzsCMS\GalleryBundle\Form\ManageGalleryFormType;
+use AmzsCMS\GalleryBundle\Repository\GalleryNested;
 use AmzsCMS\GalleryBundle\Repository\GalleryRepository;
 use AmzsCMS\GalleryBundle\Services\GalleryPictureService;
 use AmzsCMS\GalleryBundle\Services\GalleryService;
@@ -22,15 +23,13 @@ class GalleryController extends AbstractController
 
     public function index(Request $request, GalleryRepository $galleryRepository, EntityManagerInterface $em): Response
     {
-        // Lấy folderId từ URL (?folderId=101), nếu không có thì mặc định là 0 (Gốc)
         $folderId = $request->query->getInt('folderId', 0);
 
         $currentFolder = ($folderId > 0) ? $galleryRepository->find($folderId) : null;
 
-        // Lấy danh sách Thư mục & Ảnh dựa theo vị trí hiện tại
         if ($currentFolder === null) {
             $folders = $galleryRepository->getAllGalleriesRoot();
-            $pictures = []; // Thư mục gốc không chứa ảnh
+            $pictures = [];
         } else {
             $folders = $currentFolder->getChildren();
             $pictures = $em->getRepository(Picture::class)->findBy([
@@ -38,7 +37,6 @@ class GalleryController extends AbstractController
             ]);
         }
 
-        // Dựng lại chuỗi cấu trúc Breadcrumbs cây thư mục
         $breadcrumbs = [['id' => 0, 'name' => 'Thư mục gốc']];
         if ($currentFolder !== null) {
             $node = $currentFolder;
@@ -50,7 +48,6 @@ class GalleryController extends AbstractController
             $breadcrumbs = array_merge($breadcrumbs, $pathNodes);
         }
 
-        // Trả về duy nhất 1 file Twig, Turbo sẽ lo việc trích xuất và đè dữ liệu
         return $this->render('@AmzsGallery/gallery/index.html.twig', [
             'folders'         => $folders,
             'pictures'        => $pictures,
@@ -61,19 +58,27 @@ class GalleryController extends AbstractController
 
 
 
-    public function delete(Request $request, int $id, GalleryService $service, EntityManagerInterface $manager): JsonResponse
+    public function delete(Request $request, int $id, GalleryService $galleryService, GalleryRepository $galleryRepository, EntityManagerInterface $manager): JsonResponse
     {
-        $entity = $service->find($id);
-        $csrfToken = $request->query->get('_csrf_token');
-        if (!$this->isCsrfTokenValid('delete-gallery', $csrfToken)) {
-            throw new AccessDeniedHttpException();
+
+
+        $gallery = $galleryService->find($id);
+
+        $descendants = $galleryRepository->getChildren($gallery, false, null, 'asc', true);
+
+        $pictureRepo = $manager->getRepository(Picture::class);
+
+        foreach ($descendants as $node) {
+            $pictures = $pictureRepo->findBy(['gallery' => $node]);
+            foreach ($pictures as $picture) {
+                $manager->remove($picture);
+            }
+            $manager->remove($node);
         }
 
-        $entity->setArchived(true);
         $manager->flush();
-        return new JsonResponse([
-            'message' => 'Gallery deleted successfully',
-        ]);
+
+        return new JsonResponse(['message' => 'Folder and all pictures deleted successfully']);
     }
 
     public function add(EntityManagerInterface $manager, Request $request): Response

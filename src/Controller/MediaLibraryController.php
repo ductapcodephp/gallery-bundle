@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace AmzsCMS\GalleryBundle\Controller;
 
+use AmzsCMS\GalleryBundle\Entity\Gallery;
 use AmzsCMS\GalleryBundle\Entity\Picture;
+use AmzsCMS\GalleryBundle\Form\PictureType;
 use AmzsCMS\GalleryBundle\Services\PictureService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
@@ -33,31 +35,54 @@ class MediaLibraryController extends AbstractController
 //    }
 
 
-    public function upload(Request $request, EntityManagerInterface $em): JsonResponse
-    {
+    public function upload(
+        Request $request,
+        EntityManagerInterface $em
+    ): Response {
+        $uploadedFile = $request->files->get('file');
+
+        if (!$uploadedFile) {
+
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Không tìm thấy file nào được chọn.'
+            ], 400);
+        }
+
+        $picture = new Picture();
+
+        $folderId = (int) $request->request->get('folderId');
+
+        if ($folderId > 0) {
+
+            $gallery = $em
+                ->getRepository(Gallery::class)
+                ->find($folderId);
+
+            if ($gallery) {
+                $picture->setGallery($gallery);
+            }
+        }
+        $picture->setFile($uploadedFile);
         try {
-            $file = $request->files->get('file');
 
-            $pic = new Picture();
-            $pic->setFile($file);
+            $em->persist($picture);
 
-            $em->persist($pic);
             $em->flush();
 
-            return $this->json([
-                'id' => $pic->getId(),
-                'path' => $pic->getFileName(),
-            ]);
-        } catch (InvalidArgumentException $ex) {
-            return $this->json([
-                'message' => 'Invalid file upload',
-                'status' => Response::HTTP_BAD_REQUEST,
-            ], Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $ex1) {
-            return $this->json([
-                'message' => 'Something went wrong',
-                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Tải ảnh lên thành công!',
+                'id' => $picture->getId(),
+                'fileName' => $picture->getFileName(),
+            ], 200);
+
+        } catch (\Throwable $e) {
+
+            return new JsonResponse([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

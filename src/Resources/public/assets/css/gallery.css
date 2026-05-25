@@ -14,16 +14,13 @@
     background-color: #f9f9f9;
 }
 
-/* Breadcrumbs (Đường dẫn thư mục) */
 .breadcrumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
 .crumb { color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 6px; }
 .crumb:hover { background: #f1f5f9; color: #0f172a; }
 .crumb.active { color: #0f172a; font-weight: 600; cursor: default; background: none; }
 .crumb-separator { color: #cbd5e1; font-size: 12px; }
 
-/* THÂN CHỨA LƯỚI FOLDER + ẢNH (ĐÃ FIX KHOẢNG TRỐNG DƯ THỪA) */
 .manager-body {
-    /* Khung tự co giãn theo nội dung, nếu vượt quá 60% màn hình mới sinh scrollbar */
     height: auto;
     max-height: 65vh;
     overflow-y: auto;
@@ -31,14 +28,12 @@
 .manager-body::-webkit-scrollbar { width: 6px; }
 .manager-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 100px; }
 
-/* Đổi tên class grid để tránh trùng class hệ thống Bootstrap */
 .gallery-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 16px;
 }
 
-/* THIẾT KẾ CARD THƯ MỤC TRONG LƯỚI */
 .folder-item-card {
     background: #fff;
     border: 1px solid #e2e8f0;
@@ -53,14 +48,13 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     transition: all 0.2s;
     height: 100%;
-    min-height: 148px; /* Đảm bảo folder cao bằng card chứa ảnh */
+    min-height: 148px;
 }
 .folder-item-card:hover {
     border-color: #3b82f6;
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.06);
 }
-/* Sửa lỗi hiển thị icon biến mất */
 .folder-item-card i {
     font-size: 42px !important;
     color: #3b82f6;
@@ -69,7 +63,6 @@
 }
 .folder-card-name { font-size: 13px; font-weight: 500; color: #334155; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* THIẾT KẾ CARD HÌNH ẢNH TRONG LƯỚI */
 .gallery-item {
     position: relative; cursor: pointer; border-radius: 12px; border: 1px solid #e2e8f0;
     overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
@@ -94,15 +87,14 @@
 }
 .gallery-item.selected .img-name { background: #eff6ff; color: #1d4ed8; }
 
-/* FOOTER BÁM ĐÁY */
 .count-badge { font-size: 13px; font-weight: 500; color: #475569; padding: 6px 12px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; }
 .folder-item-card.root-card {
     background: #f8fafc;
-    border-style: dashed; /* Nét đứt nhìn cho giống nút hệ thống */
+    border-style: dashed;
     border-color: #cbd5e1;
 }
 .folder-item-card.root-card i {
-    color: #64748b; /* Màu icon xám lịch sự */
+    color: #64748b;
 }
 .folder-item-card.root-card:hover {
     border-color: #94a3b8;

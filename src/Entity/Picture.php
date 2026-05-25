@@ -16,6 +16,7 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
  * @ORM\Entity(repositoryClass="AmzsCMS\GalleryBundle\Repository\PictureRepository")
  * @ORM\Table(name="amzs_picture")
  * @ORM\HasLifecycleCallbacks
+ * @Vich\Uploadable
  */
 class Picture
 {

@@ -1,0 +1,210 @@
+<turbo-frame
+        id="media_library_spa"
+        data-current-folder="{{ currentFolderId }}"
+>
+
+    <div class="media-manager-wrapper card shadow-sm">
+
+        <div class="manager-toolbar d-flex flex-wrap align-items-center justify-content-between p-6 border-bottom">
+
+            <div class="breadcrumbs">
+
+                {% for crumb in breadcrumbs %}
+
+                    {% if loop.last %}
+
+                        <span class="crumb active">
+                            {% if loop.first %}
+                                <i class="ti ti-home"></i>
+                            {% endif %}
+
+                            {{ crumb.name }}
+                        </span>
+
+                    {% else %}
+
+                        <a
+                                href="{{ path('amzs_admin_gallery_index_route', {
+                                    folderId: crumb.id
+                                }) }}"
+                                data-turbo-action="advance"
+                                class="crumb text-dark text-hover-primary"
+                        >
+                            {% if loop.first %}
+                                <i class="ti ti-home"></i>
+                            {% endif %}
+
+                            {{ crumb.name }}
+                        </a>
+
+                        <span class="crumb-separator">
+                            <i class="ti ti-chevron-right"></i>
+                        </span>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+            <div class="toolbar-actions d-flex gap-2">
+
+                <button
+                        class="btn btn-sm btn-light-primary"
+                        id="btnCreateFolder"
+                >
+                    <i class="ti ti-folder-plus"></i>
+                    Tạo thư mục mới
+                </button>
+
+                <button
+                        class="btn btn-sm btn-dark"
+                        id="btnUploadImg"
+                >
+                    <i class="ti ti-cloud-upload"></i>
+                    Tải ảnh lên
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="manager-body p-6">
+
+            <div class="gallery-grid" id="galleryGrid">
+
+                {% if currentFolderId > 0 %}
+
+                    {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
+
+                    <a
+                            href="{{ path('amzs_admin_gallery_index_route', {
+                                folderId: parentFolderId
+                            }) }}"
+                            data-turbo-action="advance"
+                            class="col-folder text-decoration-none"
+                    >
+
+                        <div class="folder-item-card root-card">
+                            <i class="ti ti-arrow-back-up"></i>
+
+                            <div class="folder-card-name">
+                                .. (Quay lại)
+                            </div>
+                        </div>
+
+                    </a>
+
+                {% endif %}
+
+                {% for folder in folders %}
+
+                    <a
+                            href="{{ path('amzs_admin_gallery_index_route', {
+                                folderId: folder.id
+                            }) }}"
+                            data-turbo-action="advance"
+                            class="col-folder text-decoration-none text-dark"
+                    >
+
+                        <div
+                                class="folder-item-card selectable-item"
+                                data-type="folder"
+                                data-id="{{ folder.id }}"
+                        >
+                            <i class="ti ti-folder-filled"></i>
+
+                            <div class="folder-card-name">
+                                {{ folder.name }}
+                            </div>
+                        </div>
+
+                    </a>
+
+                {% endfor %}
+
+                {% for img in pictures %}
+
+                    <div class="col-img" data-id="{{ img.id }}">
+
+                        <div
+                                class="gallery-item selectable-item"
+                                data-type="picture"
+                                data-id="{{ img.id }}"
+                        >
+
+                            <div class="select-badge">
+                                <i class="ti ti-check"></i>
+                            </div>
+
+                            <img
+                                    src="{{ vich_uploader_asset(img, 'file') }}"
+                                    alt="{{ img.name }}"
+                                    loading="lazy"
+                            />
+
+                            <div class="img-name">
+                                {{ img.name }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+                {% if folders is empty and pictures is empty %}
+
+                    <div class="w-100 text-center p-10 text-muted">
+                        Thư mục này trống rỗng.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="manager-foot d-flex align-items-center justify-content-between p-6 border-top bg-white">
+
+            <span
+                    class="count-badge"
+                    id="selectedCount"
+            >
+                Đã chọn: 0 ảnh
+            </span>
+
+            <div class="foot-actions d-flex gap-2">
+
+                <button
+                        class="btn btn-secondary btn-sm"
+                        id="btnDeselectAll"
+                        disabled
+                >
+                    Bỏ chọn tất cả
+                </button>
+
+                <button
+                        class="btn btn-light-danger btn-sm"
+                        id="btnDeleteSelected"
+                        disabled
+                >
+                    Xóa ảnh đã chọn
+                </button>
+
+                <button
+                        class="btn btn-primary btn-sm"
+                        id="btnConfirmSelect"
+                        disabled
+                >
+                    Áp dụng ảnh đã chọn
+                    (<span class="count">0</span>)
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</turbo-frame>

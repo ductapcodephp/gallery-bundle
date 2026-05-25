@@ -19,8 +19,6 @@ amzs_admin_gallery_delete_route:
   path: /delete/{id}
   controller: AmzsCMS\GalleryBundle\Controller\GalleryController::delete
   methods: [POST, DELETE]
-  requirements:
-    id: '[1-9]\d*|__ID__'
 amzs_admin_gallery_add_picture_route:
   path: /{id}/add-picture
   controller: AmzsCMS\GalleryBundle\Controller\GalleryController::addPicture
