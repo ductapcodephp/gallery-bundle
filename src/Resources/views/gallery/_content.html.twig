@@ -49,12 +49,37 @@
 
             <div class="toolbar-actions d-flex gap-2">
 
+                {% set galleryRouteClass = 'AmzsCMS\\GalleryBundle\\Constant\\GalleryRoute' %}
+
+                {% if currentFolderId > 0 %}
+
+                    {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
+
+                    <a
+                            href="{{ path('amzs_admin_gallery_index_route', {
+                                folderId: parentFolderId
+                            }) }}"
+                            data-turbo-action="advance"
+                            data-turbo-prefetch="false"
+                            class="btn btn-sm btn-light-primary d-flex align-items-center gap-1"
+                    >
+                        ←
+
+                        <span>
+                Quay lại
+            </span>
+                    </a>
+
+                {% endif %}
+
                 <button
-                        class="btn btn-sm btn-light-primary"
-                        id="btnCreateFolder"
+                        type="button"
+                        id="btnAddFolder"
+                        class="btn btn-primary"
                 >
-                    <i class="ti ti-folder-plus"></i>
-                    Tạo thư mục mới
+                    <i class="fas fa-folder-plus"></i>
+
+                    Thêm thư mục
                 </button>
 
                 <button
@@ -62,6 +87,7 @@
                         id="btnUploadImg"
                 >
                     <i class="ti ti-cloud-upload"></i>
+
                     Tải ảnh lên
                 </button>
 
@@ -73,45 +99,20 @@
 
             <div class="gallery-grid" id="galleryGrid">
 
-                {% if currentFolderId > 0 %}
-
-                    {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
-
-                    <a
-                            href="{{ path('amzs_admin_gallery_index_route', {
-                                folderId: parentFolderId
-                            }) }}"
-                            data-turbo-action="advance"
-                            class="col-folder text-decoration-none"
-                    >
-
-                        <div class="folder-item-card root-card">
-                            <i class="ti ti-arrow-back-up"></i>
-
-                            <div class="folder-card-name">
-                                .. (Quay lại)
-                            </div>
-                        </div>
-
-                    </a>
-
-                {% endif %}
-
                 {% for folder in folders %}
 
-                    <a
-                            href="{{ path('amzs_admin_gallery_index_route', {
-                                folderId: folder.id
-                            }) }}"
-                            data-turbo-action="advance"
-                            class="col-folder text-decoration-none text-dark"
-                    >
+                    <div class="col-folder">
 
                         <div
-                                class="folder-item-card selectable-item"
+                                class="folder-item-card gallery-item selectable-item position-relative"
                                 data-type="folder"
                                 data-id="{{ folder.id }}"
+                                data-url="{{ path('amzs_admin_gallery_index_route', { folderId: folder.id }) }}"
                         >
+                            <div class="select-badge">
+                                <i class="ti ti-check"></i>
+                            </div>
+
                             <i class="ti ti-folder-filled"></i>
 
                             <div class="folder-card-name">
@@ -119,26 +120,22 @@
                             </div>
                         </div>
 
-                    </a>
+                    </div>
 
                 {% endfor %}
 
                 {% for img in pictures %}
 
-                    <div class="col-img" data-id="{{ img.id }}">
+                    <div class="col-img" data-type="picture" data-id="{{ img.id }}">
 
-                        <div
-                                class="gallery-item selectable-item"
-                                data-type="picture"
-                                data-id="{{ img.id }}"
-                        >
+                        <div class="gallery-item selectable-item" data-type="picture"  data-id="{{ img.id }}">
 
                             <div class="select-badge">
                                 <i class="ti ti-check"></i>
                             </div>
 
                             <img
-                                    src="{{ vich_uploader_asset(img, 'file') }}"
+                                    src="{{ asset( img.image ) }}"
                                     alt="{{ img.name }}"
                                     loading="lazy"
                             />
@@ -184,6 +181,12 @@
                     Bỏ chọn tất cả
                 </button>
 
+                <button
+                        class="btn btn-warning btn-sm d-none"
+                        id="btnEditSelected"
+                >
+                    <i class="ti ti-edit"></i> Sửa
+                </button>
                 <button
                         class="btn btn-light-danger btn-sm"
                         id="btnDeleteSelected"

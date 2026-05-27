@@ -2,13 +2,10 @@
 
 namespace AmzsCMS\GalleryBundle\Repository;
 
-use AmzsCMS\GalleryBundle\Entity\GalleryPictures;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use AmzsCMS\GalleryBundle\Entity\GalleryPictures;
 
-/**
- * @extends ServiceEntityRepository<GalleryPictures>
- */
 class GalleryPicturesRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,28 +13,24 @@ class GalleryPicturesRepository extends ServiceEntityRepository
         parent::__construct($registry, GalleryPictures::class);
     }
 
-    //    /**
-    //     * @return User[] Returns an array of User objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('u.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findPicturesInFolder($currentFolder): array
+    {
+        return $this->createQueryBuilder('gp')
+            ->addSelect('p')
+            ->leftJoin('gp.picture', 'p')
+            ->where('gp.gallery = :gallery')
+            ->setParameter('gallery', $currentFolder)
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?User
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    public function findPicturesInRoot(): array
+    {
+        return $this->createQueryBuilder('gp')
+            ->addSelect('p')
+            ->leftJoin('gp.picture', 'p')
+            ->where('gp.gallery IS NULL')
+            ->getQuery()
+            ->getResult();
+    }
 }

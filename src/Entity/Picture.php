@@ -23,7 +23,7 @@ class Picture
     use DoctrineIdentifierTrait, DoctrinePropPictureTrait,DoctrineDescriptionTrait,Timestampable;
 
     /**
-     * @ORM\ManyToOne(targetEntity="AmzsCMS\GalleryBundle\Entity\Gallery", inversedBy="picturies")
+     * @ORM\ManyToOne(targetEntity="AmzsCMS\GalleryBundle\Entity\Gallery", inversedBy="pictures")
      * @ORM\JoinColumn(name="gallery_id", referencedColumnName="id", nullable=true)
      */
     private $gallery;

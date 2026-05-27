@@ -4,7 +4,7 @@ amzs_admin_gallery_index_route:
   methods: [GET]
 
 amzs_admin_gallery_add_route:
-  path: /add
+  path: /add/{id}
   controller: AmzsCMS\GalleryBundle\Controller\GalleryController::add
   methods: [GET, POST]
 
@@ -12,35 +12,24 @@ amzs_admin_gallery_edit_route:
   path: /edit/{id}
   controller: AmzsCMS\GalleryBundle\Controller\GalleryController::edit
   methods: [GET, POST]
-  requirements:
-    id: '[1-9]\d*|__ID__'
+
 
 amzs_admin_gallery_delete_route:
   path: /delete/{id}
   controller: AmzsCMS\GalleryBundle\Controller\GalleryController::delete
   methods: [POST, DELETE]
-amzs_admin_gallery_add_picture_route:
-  path: /{id}/add-picture
-  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::addPicture
-  methods: [GET]
-  requirements:
-    id: '[1-9]\d*|__ID__'
+
 
 amzs_admin_gallery_edit_picture_route:
-  path: /{id}/edit-picture/{galleryPictureId}
+  path: /edit-picture/{galleryPictureId}
   controller: AmzsCMS\GalleryBundle\Controller\GalleryController::editPicture
-  methods: [GET]
-  requirements:
-    id: '[1-9]\d*|__ID__'
-    galleryPictureId: '[1-9]\d*|__ID__'
+  methods: [GET,POST]
 
 amzs_admin_gallery_delete_picture_route:
   path: /{id}/delete-picture/{galleryPictureId}
   controller: AmzsCMS\GalleryBundle\Controller\GalleryController::deletePicture
   methods: [POST, DELETE]
-  requirements:
-    id: '[1-9]\d*|__ID__'
-    galleryPictureId: '[1-9]\d*|__ID__'
+
 amzs_admin_gallery_upload_route:
   path: /upload
   controller: AmzsCMS\GalleryBundle\Controller\MediaLibraryController::upload

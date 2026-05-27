@@ -14,6 +14,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
  * @ORM\Entity(repositoryClass="AmzsCMS\GalleryBundle\Repository\GalleryRepository")
  * @ORM\Table(name="amzs_gallery")
  * @ORM\HasLifecycleCallbacks
+ * @Gedmo\SoftDeleteable(fieldName="deletedAt", timeAware=false)
  * @Gedmo\Tree(type="nested")
  */
 class Gallery
@@ -90,24 +91,24 @@ class Gallery
      */
     protected $children;
 
-//    /**
-//     *
-//     * @ORM\OneToMany(
-//     *     targetEntity="AmzsCMS\PictureBundle\Entity\Picture",
-//     *     mappedBy="gallery"
-//     * )
-//     */
-//    private $pictures;
-//
-//    /**
-//     * Gallery render ngoài frontend
-//     *
-//     * @ORM\OneToMany(
-//     *     targetEntity="AmzsCMS\PictureBundle\Entity\GalleryPictures",
-//     *     mappedBy="gallery"
-//     * )
-//     */
-//    private $galleryPictures;
+    /**
+     *
+     * @ORM\OneToMany(
+     *     targetEntity="AmzsCMS\GalleryBundle\Entity\Picture",
+     *     mappedBy="gallery"
+     * )
+     */
+    private $pictures;
+
+    /**
+     * Gallery render ngoài frontend
+     *
+     * @ORM\OneToMany(
+     *     targetEntity="AmzsCMS\GalleryBundle\Entity\GalleryPictures",
+     *     mappedBy="gallery"
+     * )
+     */
+    private $galleryPictures;
 
     public function __construct()
     {
@@ -244,63 +245,63 @@ class Gallery
     }
 
 
-//    /**
-//     * @return Collection<int, Picture>
-//     */
-//    public function getPictures(): Collection
-//    {
-//        return $this->pictures;
-//    }
-//
-//    public function addPicture(Picture $picture): self
-//    {
-//        if (!$this->pictures->contains($picture)) {
-//            $this->pictures->add($picture);
-//            $picture->setGallery($this);
-//        }
-//
-//        return $this;
-//    }
+    /**
+     * @return Collection<int, Picture>
+     */
+    public function getPictures(): Collection
+    {
+        return $this->pictures;
+    }
 
-//    public function removePicture(Picture $picture): self
-//    {
-//        if ($this->pictures->removeElement($picture)) {
-//            if ($picture->getGallery() === $this) {
-//                $picture->setGallery(null);
-//            }
-//        }
-//
-//        return $this;
-//    }
-//
-//
-//
-//    /**
-//     * @return Collection<int, GalleryPictures>
-//     */
-//    public function getGalleryPictures(): Collection
-//    {
-//        return $this->galleryPictures;
-//    }
-//
-//    public function addGalleryPicture(GalleryPictures $galleryPicture): self
-//    {
-//        if (!$this->galleryPictures->contains($galleryPicture)) {
-//            $this->galleryPictures->add($galleryPicture);
-//            $galleryPicture->setGallery($this);
-//        }
-//
-//        return $this;
-//    }
-//
-//    public function removeGalleryPicture(GalleryPictures $galleryPicture): self
-//    {
-//        if ($this->galleryPictures->removeElement($galleryPicture)) {
-//            if ($galleryPicture->getGallery() === $this) {
-//                $galleryPicture->setGallery(null);
-//            }
-//        }
-//
-//        return $this;
-//    }
+    public function addPicture(Picture $picture): self
+    {
+        if (!$this->pictures->contains($picture)) {
+            $this->pictures->add($picture);
+            $picture->setGallery($this);
+        }
+
+        return $this;
+    }
+
+    public function removePicture(Picture $picture): self
+    {
+        if ($this->pictures->removeElement($picture)) {
+            if ($picture->getGallery() === $this) {
+                $picture->setGallery(null);
+            }
+        }
+
+        return $this;
+    }
+
+
+
+    /**
+     * @return Collection<int, GalleryPictures>
+     */
+    public function getGalleryPictures(): Collection
+    {
+        return $this->galleryPictures;
+    }
+
+    public function addGalleryPicture(GalleryPictures $galleryPicture): self
+    {
+        if (!$this->galleryPictures->contains($galleryPicture)) {
+            $this->galleryPictures->add($galleryPicture);
+            $galleryPicture->setGallery($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGalleryPicture(GalleryPictures $galleryPicture): self
+    {
+        if ($this->galleryPictures->removeElement($galleryPicture)) {
+            if ($galleryPicture->getGallery() === $this) {
+                $galleryPicture->setGallery(null);
+            }
+        }
+
+        return $this;
+    }
 }

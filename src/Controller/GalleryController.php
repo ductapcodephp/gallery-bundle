@@ -3,38 +3,41 @@ namespace AmzsCMS\GalleryBundle\Controller;
 
 use AmzsCMS\GalleryBundle\Constant\GalleryRoute;
 use AmzsCMS\GalleryBundle\Entity\Gallery;
-use AmzsCMS\GalleryBundle\Entity\Picture;
+use AmzsCMS\GalleryBundle\Entity\GalleryPictures;
+use AmzsCMS\GalleryBundle\Form\GalleryPicturesType;
 use AmzsCMS\GalleryBundle\Form\ManageGalleryFormType;
-use AmzsCMS\GalleryBundle\Repository\GalleryNested;
 use AmzsCMS\GalleryBundle\Repository\GalleryRepository;
 use AmzsCMS\GalleryBundle\Services\GalleryPictureService;
 use AmzsCMS\GalleryBundle\Services\GalleryService;
+use AmzsCMS\GalleryBundle\Services\PictureService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\Routing\Annotation\Route;
-use Vich\UploaderBundle\Templating\Helper\UploaderHelper;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GalleryController extends AbstractController
 {
 
-    public function index(Request $request, GalleryRepository $galleryRepository, EntityManagerInterface $em): Response
-    {
+    public function index(
+        Request $request,
+        GalleryRepository $galleryRepository,
+        EntityManagerInterface $em
+    ): Response {
         $folderId = $request->query->getInt('folderId', 0);
 
         $currentFolder = ($folderId > 0) ? $galleryRepository->find($folderId) : null;
 
+        $galleryPicturesRepo = $em->getRepository(GalleryPictures::class);
+
         if ($currentFolder === null) {
             $folders = $galleryRepository->getAllGalleriesRoot();
-            $pictures = [];
+
+            $pictures = $galleryPicturesRepo->findPicturesInRoot();
         } else {
             $folders = $currentFolder->getChildren();
-            $pictures = $em->getRepository(Picture::class)->findBy([
-                'gallery' => $currentFolder
-            ]);
+            $pictures = $galleryPicturesRepo->findPicturesInFolder($currentFolder);
         }
 
         $breadcrumbs = [['id' => 0, 'name' => 'Thư mục gốc']];
@@ -57,48 +60,43 @@ class GalleryController extends AbstractController
     }
 
 
-
-    public function delete(Request $request, int $id, GalleryService $galleryService, GalleryRepository $galleryRepository, EntityManagerInterface $manager): JsonResponse
+    public function delete(int $id, GalleryService $galleryService, EntityManagerInterface $manager): JsonResponse
     {
-
-
         $gallery = $galleryService->find($id);
-
-        $descendants = $galleryRepository->getChildren($gallery, false, null, 'asc', true);
-
-        $pictureRepo = $manager->getRepository(Picture::class);
-
-        foreach ($descendants as $node) {
-            $pictures = $pictureRepo->findBy(['gallery' => $node]);
-            foreach ($pictures as $picture) {
-                $manager->remove($picture);
-            }
-            $manager->remove($node);
-        }
-
+        $manager->remove($gallery);
         $manager->flush();
 
         return new JsonResponse(['message' => 'Folder and all pictures deleted successfully']);
     }
 
-    public function add(EntityManagerInterface $manager, Request $request): Response
+    public function add(EntityManagerInterface $manager, Request $request, int $id = 0): Response
     {
         $gallery = new Gallery();
+
+        if ($id > 0) {
+            $parent = $manager->getRepository(Gallery::class)->find($id);
+            if ($parent) {
+                $gallery->setParent($parent);
+            }
+        }
+
         $form = $this->createForm(ManageGalleryFormType::class, $gallery, [
-            'action' => $this->generateUrl(GalleryRoute::ADD),
+            'action' => $this->generateUrl(GalleryRoute::ADD, ['id' => $id]),
         ]);
+
         $form->handleRequest($request);
+
         if ($form->isSubmitted() && $form->isValid()) {
             $manager->persist($gallery);
             $manager->flush();
 
-            return new JsonResponse(['message' => 'Gallery add successfully'],
-                Response::HTTP_CREATED);
+            return new JsonResponse(['message' => 'Gallery added successfully'], Response::HTTP_CREATED);
         }
+
         $form = $form->createView();
         $title = "Add gallery";
-        return $this->render('@AmzsGallery/gallery/add_or_edit.html.twig',
-            compact('title', 'gallery', 'form'));
+
+        return $this->render('@AmzsGallery/gallery/add_or_edit.html.twig', compact('title', 'gallery', 'form'));
     }
 
     public function edit(int $id, Request $request, GalleryService $galleryService, EntityManagerInterface $manager): Response
@@ -125,45 +123,52 @@ class GalleryController extends AbstractController
     }
 
 
-
-    public function addPicture(int $id, GalleryService $galleryService): Response
-    {
-        $gallery = $galleryService->find($id);
-        $title = 'Add picture';
-        $galleryPicture = null;
-        return $this->render('@AmzsGallery/gallery/gallery_pictures.html.twig', compact('gallery','title', 'galleryPicture'));
-    }
-
     public function editPicture(
-        int $id, int $galleryPictureId,
-        GalleryService $galleryService, GalleryPictureService $galleryPictureService): Response
-    {
-        $gallery = $galleryService->find($id);
-        $title = 'Edit picture';
-        $galleryPicture = $galleryPictureService->find($galleryPictureId);
-        return $this->render('@AmzsGallery/gallery/gallery_pictures.html.twig', compact('gallery', 'galleryPicture', 'title'));
+        Request $request,
+        EntityManagerInterface $em,
+        $galleryPictureId
+    ): Response {
+
+        $galleryPicture = $em->getRepository(GalleryPictures::class)->find($galleryPictureId);
+
+        if (!$galleryPicture)
+        {
+            throw new NotFoundHttpException('Không tìm thấy ảnh này trong thư viện!');}
+
+        $form = $this->createForm(GalleryPicturesType::class, $galleryPicture, [
+            'action' => $this->generateUrl('amzs_admin_gallery_edit_picture_route', ['galleryPictureId' => $galleryPictureId]),
+            'method' => 'POST',
+        ]);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+            return new JsonResponse(['status' => 'success', 'message' => 'Cập nhật thành công!'], 200);
+        }
+        return $this->render('@AmzsGallery/gallery/edit_picture.html.twig', [
+            'form' => $form->createView(),
+            'galleryPicture' => $galleryPicture
+        ]);
     }
+
 
 
     public function deletePicture(
-        int $id, int $galleryPictureId,
-        GalleryService $galleryService,
-        Request $request,
-        EntityManagerInterface $manager,
-        GalleryPictureService $galleryPictureService): Response
-    {
-        $entity = $galleryService->find($id);
-        $picture = $galleryPictureService->find($galleryPictureId);
-        $csrfToken = $request->query->get('_csrf_token');
-        if(!$this->isCsrfTokenValid('delete-picture', $csrfToken) || empty($entity))
-            throw new AccessDeniedHttpException();
+        int $galleryPictureId,
+        EntityManagerInterface $manager
+    ): Response {
+        $galleryPicture = $manager->getRepository(GalleryPictures::class)->find($galleryPictureId);
+        if (empty($galleryPicture)) {
+            return new JsonResponse(['error' => 'Không tìm thấy ảnh này trong hệ thống!'], 404);
+        }
 
-        $picture->setArchived(true);
+        $manager->remove($galleryPicture);
         $manager->flush();
+
         return new JsonResponse([
             'message' => 'Picture deleted successfully',
         ]);
     }
-
 
 }
