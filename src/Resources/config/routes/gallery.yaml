@@ -34,3 +34,8 @@ amzs_admin_gallery_upload_route:
   path: /upload
   controller: AmzsCMS\GalleryBundle\Controller\MediaLibraryController::upload
   methods: [POST, GET]
+
+amzs_admin_gallery_modal_route:
+  path: /modal
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::modal
+  methods: [POST, GET]

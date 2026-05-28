@@ -1,5 +1,7 @@
+{% set frameId = isModal|default(false) ? 'media_library_modal_spa' : 'media_library_spa' %}
+{% set targetRoute = isModal|default(false) ? 'amzs_admin_gallery_modal_route' : 'amzs_admin_gallery_index_route' %}
 <turbo-frame
-        id="media_library_spa"
+        id="{{ frameId }}"
         data-current-folder="{{ currentFolderId }}"
 >
 
@@ -27,7 +29,9 @@
                                 href="{{ path('amzs_admin_gallery_index_route', {
                                     folderId: crumb.id
                                 }) }}"
+                                data-turbo-prefetch="false"
                                 data-turbo-action="advance"
+
                                 class="crumb text-dark text-hover-primary"
                         >
                             {% if loop.first %}

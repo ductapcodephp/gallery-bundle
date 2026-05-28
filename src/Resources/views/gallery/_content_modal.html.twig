@@ -1,0 +1,107 @@
+<turbo-frame
+        id="media_library_modal_spa"
+        data-current-folder="{{ currentFolderId }}"
+>
+    <div class="media-manager-wrapper card shadow-sm">
+
+        <div class="manager-toolbar d-flex flex-wrap align-items-center justify-content-between p-6 border-bottom">
+
+            <div class="breadcrumbs">
+                {% for crumb in breadcrumbs %}
+                    {% if loop.last %}
+                        <span class="crumb active">
+                            {% if loop.first %}<i class="ti ti-home"></i>{% endif %}
+                            {{ crumb.name }}
+                        </span>
+                    {% else %}
+                        <a
+                                href="javascript:void(0)"
+                                class="crumb text-dark text-hover-primary"
+                                data-modal-navigate="{{ crumb.id }}"
+                        >
+                            {% if loop.first %}<i class="ti ti-home"></i>{% endif %}
+                            {{ crumb.name }}
+                        </a>
+                        <span class="crumb-separator">
+                            <i class="ti ti-chevron-right"></i>
+                        </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="toolbar-actions d-flex gap-2">
+
+                {% if currentFolderId > 0 %}
+                    {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
+                    <a
+                            href="javascript:void(0)"
+                            class="btn btn-sm btn-light-primary d-flex align-items-center gap-1"
+                            data-modal-navigate="{{ parentFolderId }}"
+                    >
+                        ← <span>Quay lại</span>
+                    </a>
+                {% endif %}
+
+                <button type="button" id="btnAddFolder" class="btn btn-primary">
+                    <i class="fas fa-folder-plus"></i> Thêm thư mục
+                </button>
+
+                <button type="button" class="btn btn-sm btn-dark" id="btnUploadImg">
+                    <i class="ti ti-cloud-upload"></i> Tải ảnh lên
+                </button>
+
+            </div>
+        </div>
+
+        <div class="manager-body p-6">
+            <div class="gallery-grid" id="galleryGrid">
+
+                {% for folder in folders %}
+                    <div class="col-folder">
+                        <div
+                                class="folder-item-card gallery-item selectable-item position-relative"
+                                data-type="folder"
+                                data-id="{{ folder.id }}"
+                        >
+                            <div class="select-badge"><i class="ti ti-check"></i></div>
+                            <i class="ti ti-folder-filled"></i>
+                            <div class="folder-card-name">{{ folder.name }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% for img in pictures %}
+                    <div class="col-img">
+                        <div class="gallery-item selectable-item" data-type="picture" data-id="{{ img.id }}">
+                            <div class="select-badge"><i class="ti ti-check"></i></div>
+                            <img src="{{ asset(img.image) }}" alt="{{ img.name }}" loading="lazy"/>
+                            <div class="img-name">{{ img.name }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% if folders is empty and pictures is empty %}
+                    <div class="w-100 text-center p-10 text-muted">
+                        Thư mục này trống rỗng.
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <div class="manager-foot d-flex align-items-center justify-content-between p-6 border-top bg-white">
+            <span class="count-badge" id="selectedCount">Đã chọn: 0 ảnh</span>
+            <div class="foot-actions d-flex gap-2">
+                <button class="btn btn-secondary btn-sm" id="btnDeselectAll" disabled>Bỏ chọn tất cả</button>
+                <button class="btn btn-warning btn-sm d-none" id="btnEditSelected">
+                    <i class="ti ti-edit"></i> Sửa
+                </button>
+                <button class="btn btn-light-danger btn-sm" id="btnDeleteSelected" disabled>Xóa đã chọn</button>
+                <button class="btn btn-primary btn-sm" id="btnConfirmSelect" disabled>
+                    Áp dụng ảnh đã chọn (<span class="count">0</span>)
+                </button>
+            </div>
+        </div>
+
+    </div>
+</turbo-frame>

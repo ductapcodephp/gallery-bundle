@@ -1,191 +1,315 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const galleryGrid = document.getElementById("galleryGrid");
-    const breadcrumbsContainer = document.getElementById("breadcrumbsContainer");
+let folderClickTimeout = null;
+function getCurrentFolderId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('folderId') || 0;
+}
 
-    // ĐƯỜNG DẪN URL API: Hãy khớp url này với Route xử lý hàm dataGallery ở Backend của bạn
-    const API_DATA_BASE_URL = "/cms/gallery/data";
+function openAjaxModal(url, loadingText = "Đang xử lý...") {
+    fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error(`Server báo lỗi ${response.status}`);
+            return response.text();
+        })
+        .then(html => {
+            let existingModal = document.getElementById('amzs-dynamic-modal-container');
+            if (existingModal) existingModal.remove();
 
+            const modalContainer = document.createElement('div');
+            modalContainer.id = 'amzs-dynamic-modal-container';
+            modalContainer.innerHTML = html;
+            document.body.appendChild(modalContainer);
 
-    function loadFolderContent(folderId) {
-        // Tạo hiệu ứng loading nhẹ mắt khi đang chờ nạp dữ liệu
-        galleryGrid.innerHTML = `
-            <div class="w-100 text-center p-10">
-                <div class="spinner-border text-primary" role="status"></div>
-                <div class="mt-2 text-muted fs-7">Đang tải dữ liệu...</div>
-            </div>`;
+            const modalElement = modalContainer.querySelector('.modal');
+            if (!modalElement) {
+                alert("Không tìm thấy cấu trúc Modal! Vui lòng kiểm tra lại cấu hình Controller.");
+                return;
+            }
 
-        // Gọi Ajax ngầm lên server
-        fetch(`${API_DATA_BASE_URL}/${folderId}`)
-            .then(response => {
-                if (!response.ok) throw new Error("Network response was not ok");
-                return response.json();
-            })
-            .then(data => {
-                if (!data.success) return;
+            const modalInstance = new bootstrap.Modal(modalElement);
+            modalInstance.show();
 
-                // Cập nhật lại ID thư mục hiện tại vào thuộc tính thẻ grid
-                galleryGrid.setAttribute("data-current-folder", data.currentFolderId);
+            const form = modalElement.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function (submitEvent) {
+                    submitEvent.preventDefault();
+                    const formData = new FormData(form);
 
-                // 1. VẼ LẠI THANH ĐƯỜNG DẪN (BREADCRUMBS)
-                renderBreadcrumbs(data.breadcrumbs);
+                    const submitBtn = form.querySelector('[type="submit"]');
+                    let originalBtnText = '';
+                    if (submitBtn) {
+                        originalBtnText = submitBtn.innerHTML;
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${loadingText}`;
+                    }
 
-                // 2. LÀM SẠCH VÀ VẼ LẠI LƯỚI NỘI DUNG (FOLDERS & IMAGES)
-                galleryGrid.innerHTML = "";
+                    fetch(form.action, {
+                        method: form.method || 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                        .then(res => {
+                            if (res.status === 200 || res.status === 201 || res.ok) return res.json();
+                            throw new Error('Lỗi xử lý form từ server');
+                        })
+                        .then(data => {
+                            modalInstance.hide();
 
-                // Nếu không phải ở thư mục gốc (ID > 0), chèn ô đi ngược ra ".." lên đầu
-                if (parseInt(data.currentFolderId) > 0) {
-                    // Tìm ID của folder cha ngay phía trước trong mảng breadcrumbs
-                    const idx = data.breadcrumbs.findIndex(b => parseInt(b.id) === parseInt(data.currentFolderId));
-                    const parentId = idx > 0 ? data.breadcrumbs[idx - 1].id : 0;
-                    const backFolderHtml = `
-                        <div class="col-folder folder-root" data-folder-id="${parentId}">
-                            <div class="folder-item-card root-card">
-                                <i class="ti ti-arrow-back-up"></i>
-                                <div class="folder-card-name">.. (Quay lại)</div>
-                            </div>
-                        </div>`;
-                    galleryGrid.insertAdjacentHTML("beforeend", backFolderHtml);
-                }
-
-                // Nếu trống hoàn toàn (không có cả thư mục con lẫn ảnh)
-                if (data.folders.length === 0 && data.pictures.length === 0) {
-                    galleryGrid.innerHTML = `
-                        <div class="w-100 text-center p-10 text-muted">
-                            Thư mục này trống rỗng.
-                        </div>`;
-                    updateSelectionCount();
-                    return;
-                }
-
-                // Render danh sách các thư mục con
-                data.folders.forEach(folder => {
-                    const folderHtml = `
-                        <div class="col-folder" data-folder-id="${folder.id}">
-                            <div class="folder-item-card">
-                                <i class="ti ti-folder-filled"></i>
-                                <div class="folder-card-name">${folder.name}</div>
-                            </div>
-                        </div>`;
-                    galleryGrid.insertAdjacentHTML("beforeend", folderHtml);
+                            const folderId = getCurrentFolderId();
+                            Turbo.visit(`/cms/gallery?folderId=${folderId}`, {
+                                frame: "media_library_spa",
+                                action: "advance"
+                            });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert("Có lỗi xảy ra khi lưu, vui lòng kiểm tra lại dữ liệu!");
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalBtnText;
+                            }
+                        });
                 });
+            }
 
-                // Render danh sách các file hình ảnh
-                data.pictures.forEach(img => {
-                    const imgHtml = `
-                        <div class="col-img" data-id="${img.id}">
-                            <div class="gallery-item">
-                                <div class="select-badge"><i class="ti ti-check" style="font-size:12px"></i></div>
-                                <img src="${img.url}" alt="${img.name}" loading="lazy">
-                                <div class="img-name">${img.name}</div>
-                            </div>
-                        </div>`;
-                    galleryGrid.insertAdjacentHTML("beforeend", imgHtml);
-                });
-
-                // Reset bộ đếm số ảnh đã chọn về 0 khi nhảy sang thư mục khác
-                updateSelectionCount();
-            })
-            .catch(err => {
-                console.error("SPA Fetch Error:", err);
-                galleryGrid.innerHTML = `
-                    <div class="alert alert-danger w-100 text-center m-0">
-                        Không thể kết nối đến hệ thống tệp tin! Vui lòng thử lại.
-                    </div>`;
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                modalContainer.remove();
             });
-    }
-
-    /**
-     * Hàm hỗ trợ vẽ chuỗi Breadcrumbs động dựa trên mảng gửi về từ API
-     */
-    function renderBreadcrumbs(breadcrumbs) {
-        breadcrumbsContainer.innerHTML = "";
-        breadcrumbs.forEach((crumb, index) => {
-            const isLast = index === breadcrumbs.length - 1;
-            const iconRoot = index === 0 ? '<i class="ti ti-home"></i> ' : '';
-
-            if (isLast) {
-                breadcrumbsContainer.insertAdjacentHTML("beforeend", `
-                    <span class="crumb active" data-target-folder="${crumb.id}">
-                        ${iconRoot}${crumb.name}
-                    </span>
-                `);
-            } else {
-                breadcrumbsContainer.insertAdjacentHTML("beforeend", `
-                    <span class="crumb" data-target-folder="${crumb.id}">
-                        ${iconRoot}${crumb.name}
-                    </span>
-                    <span class="crumb-separator"><i class="ti ti-chevron-right"></i></span>
-                `);
-            }
+        })
+        .catch(err => {
+            console.error("Lỗi AJAX Modal:", err);
+            alert("Không thể tải form! Hãy ấn F12 xem tab Network hoặc Console.");
         });
-    }
+}
 
-    // ================= KHU VỰC LẮNG NGHE SỰ KIỆN (EVENT LISTENERS) =================
+document.addEventListener("click", async function (e) {
 
-    // 1. Click đúp (dblclick) vào ô Folder bất kỳ để mở sâu vào trong
-    galleryGrid.addEventListener("dblclick", function (e) {
-        const folderTarget = e.target.closest(".col-folder");
-        if (folderTarget) {
-            const id = folderTarget.getAttribute("data-folder-id");
-            loadFolderContent(id);
-        }
-    });
+    const galleryItem = e.target.closest(".gallery-item");
+    if (galleryItem) {
+        const type = galleryItem.dataset.type;
 
-    // 2. Click vào các nút trên thanh Breadcrumbs để giật lùi về các tầng cha nhanh chóng
-    breadcrumbsContainer.addEventListener("click", function (e) {
-        const crumbTarget = e.target.closest(".crumb:not(.active)");
-        if (crumbTarget) {
-            const id = crumbTarget.getAttribute("data-target-folder");
-            loadFolderContent(id);
-        }
-    });
-
-    // 3. Click chuột đơn (click) để Chọn / Bỏ chọn ảnh
-    galleryGrid.addEventListener("click", function (e) {
-        const itemTarget = e.target.closest(".gallery-item");
-        if (itemTarget) {
-            itemTarget.classList.toggle("selected");
+        if (type === "picture") {
+            galleryItem.classList.toggle("selected");
             updateSelectionCount();
         }
-    });
-
-    /**
-     * Hàm điều khiển bật/tắt & đếm số lượng của các nút bấm dưới footer
-     */
-    function updateSelectionCount() {
-        const selectedElements = galleryGrid.querySelectorAll(".gallery-item.selected");
-        const totalSelected = selectedElements.length;
-
-        document.getElementById("selectedCount").innerText = `Đã chọn: ${totalSelected} ảnh`;
-
-        const btnDeselectAll = document.getElementById("btnDeselectAll");
-        const btnDeleteSelected = document.getElementById("btnDeleteSelected");
-        const btnConfirmSelect = document.getElementById("btnConfirmSelect");
-
-        if (totalSelected > 0) {
-            if (btnDeselectAll) btnDeselectAll.removeAttribute("disabled");
-            if (btnDeleteSelected) btnDeleteSelected.removeAttribute("disabled");
-            if (btnConfirmSelect) {
-                btnConfirmSelect.removeAttribute("disabled");
-                btnConfirmSelect.querySelector(".count").innerText = totalSelected;
+        else if (type === "folder") {
+            e.preventDefault();
+            if (folderClickTimeout) {
+                clearTimeout(folderClickTimeout);
+                folderClickTimeout = null;
+                return;
             }
-        } else {
-            if (btnDeselectAll) btnDeselectAll.setAttribute("disabled", "true");
-            if (btnDeleteSelected) btnDeleteSelected.setAttribute("disabled", "true");
-            if (btnConfirmSelect) {
-                btnConfirmSelect.setAttribute("disabled", "true");
-                btnConfirmSelect.querySelector(".count").innerText = "0";
-            }
+            folderClickTimeout = setTimeout(() => {
+                folderClickTimeout = null;
+                const url = galleryItem.dataset.url || galleryItem.getAttribute("href");
+                if (url) {
+                    Turbo.visit(url, { frame: "media_library_spa", action: "advance" });
+                }
+            }, 250);
         }
+        return;
     }
 
-    // Sự kiện nút hủy chọn nhanh toàn bộ ảnh đang tích trên màn hình hiện tại
-    const btnDeselect = document.getElementById("btnDeselectAll");
-    if (btnDeselect) {
-        btnDeselect.addEventListener("click", function() {
-            galleryGrid.querySelectorAll(".gallery-item.selected").forEach(el => el.classList.remove("selected"));
-            updateSelectionCount();
+    const btnDeselectAll = e.target.closest("#btnDeselectAll");
+    if (btnDeselectAll) {
+        document.querySelectorAll(".gallery-item.selected").forEach(el => el.classList.remove("selected"));
+        updateSelectionCount();
+        return;
+    }
+
+    const btnUpload = e.target.closest("#btnUploadImg");
+    if (btnUpload) {
+        let hiddenInput = document.getElementById("spaHiddenFileInput");
+        if (!hiddenInput) {
+            hiddenInput = document.createElement("input");
+            hiddenInput.type = "file";
+            hiddenInput.multiple = true;
+            hiddenInput.accept = "image/*";
+            hiddenInput.id = "spaHiddenFileInput";
+            hiddenInput.style.display = "none";
+            document.body.appendChild(hiddenInput);
+        }
+        hiddenInput.click();
+        return;
+    }
+
+    const btnDeleteSelected = e.target.closest("#btnDeleteSelected");
+    if (btnDeleteSelected) {
+        if (!confirm("Bạn có chắc chắn muốn xóa các mục đã chọn?")) return;
+
+        const selectedElements = document.querySelectorAll(".gallery-item.selected");
+        const currentFolderId = getCurrentFolderId();
+
+        const deletePromises = Array.from(selectedElements).map(el => {
+            const itemId = el.dataset.id;
+            const type = el.dataset.type;
+            const deleteUrl = (type === 'picture') ? `/cms/gallery/delete-picture/${itemId}` : `/cms/gallery/delete/${itemId}`;
+
+            return fetch(deleteUrl, {
+                method: "DELETE",
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(r => r.json());
         });
+
+        try {
+            btnDeleteSelected.disabled = true;
+            await Promise.all(deletePromises);
+            Turbo.visit(`/cms/gallery?folderId=${currentFolderId}`, { frame: "media_library_spa", action: "advance" });
+        } catch (err) {
+            console.error(err);
+            alert("Có lỗi xảy ra khi xóa!");
+        } finally {
+            btnDeleteSelected.disabled = false;
+        }
+        return;
+    }
+
+    const btnAddFolder = e.target.closest("#btnAddFolder");
+    if (btnAddFolder) {
+        e.preventDefault();
+        const currentFolderId = getCurrentFolderId();
+        const baseUrl = "/cms/gallery/add";
+
+        openAjaxModal(`${baseUrl}/${currentFolderId}`, "Đang tạo thư mục...");
+        return;
+    }
+
+    const btnEditSelected = e.target.closest("#btnEditSelected");
+    if (btnEditSelected) {
+        e.preventDefault();
+        const selectedElement = document.querySelector(".gallery-item.selected");
+        if (!selectedElement) return;
+
+        const itemId = selectedElement.dataset.id;
+        const type = selectedElement.dataset.type;
+
+        const editUrl = (type === "folder") ? `/cms/gallery/edit/${itemId}` : `/cms/gallery/edit-picture/${itemId}`;
+
+        openAjaxModal(editUrl, "Đang lưu thay đổi...");
+        return;
+    }
+
+    if (btnConfirmSelect) {
+
+        const selectedPictures = Array.from(
+            document.querySelectorAll(
+                ".gallery-item.selected[data-type='picture']"
+            )
+        );
+
+        const selectedData = selectedPictures.map(el => ({
+            id: el.dataset.id,
+            image: el.querySelector("img")?.src || null,
+            name: el.querySelector(".img-name")?.innerText || null
+        }));
+
+        console.log("PICTURES:", selectedData);
+
+        return;
+    }
+});
+document.addEventListener("dblclick", function (e) {
+    const folderItem = e.target.closest(".gallery-item[data-type='folder']");
+    if (folderItem) {
+        e.preventDefault();
+        if (folderClickTimeout) {
+            clearTimeout(folderClickTimeout);
+            folderClickTimeout = null;
+        }
+        folderItem.classList.toggle("selected");
+        updateSelectionCount();
     }
 });
 
+document.addEventListener("change", async function (e) {
+    if (e.target.id !== "spaHiddenFileInput") return;
+
+    const hiddenInput = e.target;
+    const files = Array.from(hiddenInput.files);
+    if (!files.length) return;
+
+    const currentFolderId = getCurrentFolderId();
+    const btnUpload = document.getElementById("btnUploadImg");
+    const originalHtml = btnUpload.innerHTML;
+
+    try {
+        btnUpload.disabled = true;
+        btnUpload.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang tải...`;
+
+        const uploadPromises = files.map(file => {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("folderId", currentFolderId);
+            return fetch("/cms/gallery/upload", { method: "POST", body: formData }).then(r => r.json());
+        });
+
+        await Promise.all(uploadPromises);
+        hiddenInput.value = "";
+        Turbo.visit(`/cms/gallery?folderId=${currentFolderId}`, { frame: "media_library_spa", action: "advance" });
+    } catch (err) {
+        console.error(err);
+        alert("Upload thất bại!");
+    } finally {
+        btnUpload.disabled = false;
+        btnUpload.innerHTML = originalHtml;
+    }
+});
+
+function updateSelectionCount() {
+
+    const selectedElements = Array.from(
+        document.querySelectorAll(".gallery-item.selected")
+    );
+
+    const selectedPictures = selectedElements.filter(
+        el => el.dataset.type === "picture"
+    );
+
+    const selectedCount = selectedPictures.length;
+
+    const countBadge = document.getElementById("selectedCount");
+    const btnDeselectAll = document.getElementById("btnDeselectAll");
+    const btnDeleteSelected = document.getElementById("btnDeleteSelected");
+    const btnConfirmSelect = document.getElementById("btnConfirmSelect");
+    const btnEditSelected = document.getElementById("btnEditSelected");
+
+    const hasSelected = selectedCount > 0;
+
+    if (countBadge) {
+        countBadge.innerText = `Đã chọn: ${selectedCount} ảnh`;
+    }
+
+    if (btnDeselectAll) {
+        btnDeselectAll.disabled = selectedElements.length === 0;
+    }
+
+    if (btnDeleteSelected) {
+        btnDeleteSelected.disabled = selectedElements.length === 0;
+    }
+
+    if (btnConfirmSelect) {
+
+        btnConfirmSelect.disabled = !hasSelected;
+
+        const countEl = btnConfirmSelect.querySelector(".count");
+
+        if (countEl) {
+            countEl.innerText = selectedCount;
+        }
+
+
+    }
+    if (btnEditSelected) {
+
+        if (selectedElements.length === 1) {
+            btnEditSelected.classList.remove("d-none");
+        } else {
+            btnEditSelected.classList.add("d-none");
+        }
+    }
+}
+document.addEventListener("turbo:frame-load", function () {
+    console.log("frame loaded");
+    updateSelectionCount();
+});

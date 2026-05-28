@@ -171,4 +171,48 @@ class GalleryController extends AbstractController
         ]);
     }
 
+    public function modal(
+        Request $request,
+        GalleryRepository $galleryRepository,
+        EntityManagerInterface $em
+    ): Response {
+        $folderId      = $request->query->getInt('folderId', 0);
+        $currentFolder = ($folderId > 0) ? $galleryRepository->find($folderId) : null;
+        $picturesRepo  = $em->getRepository(GalleryPictures::class);
+
+        if ($currentFolder === null) {
+            $folders  = $galleryRepository->getAllGalleriesRoot();
+            $pictures = $picturesRepo->findPicturesInRoot();
+        } else {
+            $folders  = $currentFolder->getChildren();
+            $pictures = $picturesRepo->findPicturesInFolder($currentFolder);
+        }
+
+        $breadcrumbs = [['id' => 0, 'name' => 'Thư mục gốc']];
+        if ($currentFolder !== null) {
+            $node = $currentFolder;
+            $pathNodes = [];
+            while ($node !== null) {
+                array_unshift($pathNodes, ['id' => $node->getId(), 'name' => $node->getName()]);
+                $node = $node->getParent();
+            }
+            $breadcrumbs = array_merge($breadcrumbs, $pathNodes);
+        }
+
+        $data = [
+            'folders'         => $folders,
+            'pictures'        => $pictures,
+            'breadcrumbs'     => $breadcrumbs,
+            'currentFolderId' => $folderId,
+            'isModal'         => true,
+        ];
+
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return $this->render('@AmzsGallery/gallery/_content_modal.html.twig', $data);
+        }
+
+        // Request thường → full modal page
+        return $this->render('@AmzsGallery/gallery/modal.html.twig', $data);
+    }
+
 }

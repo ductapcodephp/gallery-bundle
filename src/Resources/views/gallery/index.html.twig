@@ -31,6 +31,23 @@
 {% endblock %}
 
 {% block body %}
+    {# nút gọi modal #}
+    <div class="card-toolbar">
+
+        <a
+                href="javascript:void(0)"
+                class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                data-amzs-gallery-modal
+                data-bs-toggle="tooltip"
+                title="Open Gallery"
+        >
+            <i class="ki-duotone ki-pencil fs-7">
+                <span class="path1"></span>
+                <span class="path2"></span>
+            </i>
+        </a>
+
+    </div>
     <div id="gallerySPA">
         {% include '@AmzsGallery/gallery/_content.html.twig' %}
     </div>
@@ -44,9 +61,13 @@
             data-turbo-track="reload">
     </script>
 
-
+    {# phải tắt js một trong 2 tránh bị gọi trên cùng 1 trang gây lỗi #}
+{#    <script#}
+{#            src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery.js') }}"#}
+{#            data-turbo-track="reload">#}
+{#    </script>#}
     <script
-            src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery2.js') }}"
+            src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery_modal.js') }}"
             data-turbo-track="reload">
     </script>
 {% endblock %}
