@@ -42,7 +42,6 @@
                     </a>
                 {% endif %}
 
-                {# Thêm tiền tố modal- vào ID #}
                 <button type="button" id="modal-btnAddFolder" class="btn btn-primary">
                     <i class="fas fa-folder-plus"></i> Thêm thư mục
                 </button>
@@ -54,7 +53,7 @@
             </div>
         </div>
 
-        <div class="manager-body p-6">
+        <div class="manager-body p-6" style="min-height: 480px;">
             <div class="gallery-grid" id="modal-galleryGrid">
 
                 {% for folder in folders %}
@@ -82,16 +81,69 @@
                 {% endfor %}
 
                 {% if folders is empty and pictures is empty %}
-                    <div class="w-100 text-center p-10 text-muted">
+                    <div class="w-100 text-center p-10 text-muted" style="padding-top: 100px !important;">
                         Thư mục này trống rỗng.
                     </div>
                 {% endif %}
 
             </div>
+
+            {% if pictures.pageCount > 1 %}
+                <div class="manager-pagination d-flex justify-content-center mt-6">
+                    <nav aria-label="Media library pagination">
+                        <ul class="pagination pagination-sm mb-0 gap-1">
+
+                            {% if pictures.current > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
+                                       href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge(app.request.query.all)|merge({'page': pictures.current - 1})) }}"
+                                       aria-label="Previous">
+                                        <i class="ti ti-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link rounded-2 border-0 bg-light text-muted"><i class="ti ti-chevron-left"></i></span>
+                                </li>
+                            {% endif %}
+
+                            {% for page in 1..pictures.pageCount %}
+                                {% if page == pictures.current %}
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link rounded-2 border-0 bg-primary text-white fw-bold">{{ page }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link rounded-2 border-0 text-dark text-hover-primary bg-hover-light"
+                                           href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge(app.request.query.all)|merge({'page': page})) }}">
+                                            {{ page }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if pictures.current < pictures.pageCount %}
+                                <li class="page-item">
+                                    <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
+                                       href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge(app.request.query.all)|merge({'page': pictures.current + 1})) }}"
+                                       aria-label="Next">
+                                        <i class="ti ti-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link rounded-2 border-0 bg-light text-muted"><i class="ti ti-chevron-right"></i></span>
+                                </li>
+                            {% endif %}
+
+                        </ul>
+                    </nav>
+                </div>
+            {% endif %}
+
         </div>
 
         <div class="manager-foot d-flex align-items-center justify-content-between p-6 border-top bg-white">
-            {# Thêm tiền tố modal- vào ID #}
             <span class="count-badge" id="modal-selectedCount">Đã chọn: 0 ảnh</span>
             <div class="foot-actions d-flex gap-2">
                 <button class="btn btn-secondary btn-sm" id="modal-btnDeselectAll" disabled>Bỏ chọn tất cả</button>

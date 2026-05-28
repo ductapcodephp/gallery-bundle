@@ -1,7 +1,8 @@
 (function () {
     "use strict";
 
-    var MODAL_URL = "/cms/gallery/modal";
+    var MODAL_URL = Routing.generate('amzs_admin_gallery_modal_route');
+
     var MODAL_ID  = "amzsGalleryPickerModal";
     var BODY_ID   = "amzsGalleryPickerBody";
 
@@ -18,9 +19,13 @@
         "  position:absolute; inset:0; z-index:10;",
         "  display:flex; align-items:center; justify-content:center;",
         "  background:rgba(255,255,255,0.65);",
+        "}",
+        "@media (min-width: 1200px) {",
+        "  .amzs-modal-xl-custom { max-width: 1100px !important; }",
         "}"
     ].join("\n");
     document.head.appendChild(_style);
+
     //lắng nghe nút đặt data-amzs-gallery-modal attribute để mở modal
     document.addEventListener("click", function (e) {
         if (e.target.closest("#" + MODAL_ID)) return;
@@ -37,6 +42,7 @@
         _load(0);
         _modalInst.show();
     }
+
     // khởi tạo modal
     function _ensureShell() {
         var existing = document.getElementById(MODAL_ID);
@@ -53,8 +59,7 @@
         _modalEl.setAttribute("data-amzs-gallery-modal-container", "true");
 
         var dialog  = document.createElement("div");
-        dialog.setAttribute("class", "modal-dialog modal-xl modal-dialog-centered");
-        dialog.style.maxWidth = "1100px";
+        dialog.setAttribute("class", "modal-dialog modal-xl modal-dialog-centered amzs-modal-xl-custom");
 
         var content = document.createElement("div");
         content.setAttribute("class", "modal-content");
@@ -81,7 +86,8 @@
         _modalInst = new bootstrap.Modal(_modalEl, { backdrop: "static" });
         _modalEl.addEventListener("hidden.bs.modal", _onHidden);
     }
-// render data gallery
+
+    // render data gallery
     function _load(folderId) {
         var body    = document.getElementById(BODY_ID);
         var isEmpty = body.innerHTML.trim() === "";
@@ -139,9 +145,8 @@
         c.removeEventListener("dblclick", _onDblClick);
     }
 
-    //xử lý sự kiện clivk
+    //xử lý sự kiện click
     function _onClick(e) {
-
         var nav = e.target.closest("[data-modal-navigate]");
         if (nav) {
             e.preventDefault();
@@ -184,7 +189,12 @@
 
         if (e.target.closest("#modal-btnAddFolder")) {
             e.preventDefault();
-            _openSubModal("/cms/gallery/add/" + _getFolderId(), "Đang tạo thư mục...");
+            _openSubModal(
+                Routing.generate('amzs_admin_gallery_add_route', {
+                    id: _getFolderId()
+                }),
+                "Đang tạo thư mục..."
+            );
             return;
         }
 
@@ -192,29 +202,23 @@
             e.preventDefault();
             var sel = body.querySelector(".gallery-item.selected");
             if (!sel) return;
-            var url = sel.dataset.type === "folder"
-                ? "/cms/gallery/edit/" + sel.dataset.id
-                : "/cms/gallery/edit-picture/" + sel.dataset.id;
-            _openSubModal(url, "Đang lưu thay đổi...");
-            return;
-        }
 
-        if (e.target.closest("#modal-btnCropSelected")) {
-            e.preventDefault();
-            var selPic = body.querySelector(".gallery-item.selected[data-type='picture']");
-            if (!selPic || typeof AmzsGalleryCrop === "undefined") return;
-            AmzsGalleryCrop.open({
-                id   : selPic.dataset.id,
-                image: selPic.querySelector("img") ? selPic.querySelector("img").src : "",
-                name : selPic.querySelector(".img-name") ? selPic.querySelector(".img-name").innerText.trim() : ""
-            }, function () { _load(_getFolderId()); });
+            var url = sel.dataset.type === "folder"
+                ? Routing.generate('amzs_admin_gallery_edit_route', {
+                    id: sel.dataset.id
+                })
+                : Routing.generate('amzs_admin_gallery_edit_picture_route', {
+                    galleryPictureId: sel.dataset.id
+                });
+
+            _openSubModal(url, "Đang lưu thay đổi...");
             return;
         }
 
         if (e.target.closest("#modal-btnConfirmSelect")) { _confirm(); return; }
     }
 
-    //  Dblclick  chọn hoặc hủy chọn folder
+    // Dblclick chọn hoặc hủy chọn folder
     function _onDblClick(e) {
         var folder = e.target.closest(".gallery-item[data-type='folder']");
         if (!folder) return;
@@ -224,7 +228,7 @@
         _updateCount();
     }
 
-    //  Upload
+    // Upload
     function _triggerUpload() {
         var input = document.getElementById("amzsGalleryFileInput");
         if (!input) {
@@ -239,7 +243,6 @@
                 var files    = Array.from(input.files);
                 if (!files.length) return;
                 var folderId = _getFolderId();
-                // Update ID selector here too
                 var btn      = document.getElementById(BODY_ID).querySelector("#modal-btnUploadImg");
                 var orig     = btn ? btn.innerHTML : "";
                 if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang tải...'; }
@@ -247,7 +250,13 @@
                     var fd = new FormData();
                     fd.append("file", file);
                     fd.append("folderId", folderId);
-                    return fetch("/cms/gallery/upload", { method: "POST", body: fd }).then(function (r) { return r.json(); });
+                    return fetch(
+                        Routing.generate('amzs_admin_gallery_upload_route'),
+                        {
+                            method: "POST",
+                            body: fd
+                        }
+                    ).then(function (r) { return r.json(); });
                 }))
                     .then(function () { input.value = ""; _load(folderId); })
                     .catch(function (err) { alert("Upload thất bại!"); console.error(err); })
@@ -258,7 +267,7 @@
         input.click();
     }
 
-    //  Xóa hàng loạt
+    // Xóa hàng loạt
     function _deleteSelected(btn) {
         if (!confirm("Bạn có chắc chắn muốn xóa các mục đã chọn?")) return;
         var body     = document.getElementById(BODY_ID);
@@ -267,16 +276,25 @@
         btn.disabled = true;
         Promise.all(selected.map(function (el) {
             var url = el.dataset.type === "picture"
-                ? "/cms/gallery/delete-picture/" + el.dataset.id
-                : "/cms/gallery/delete/" + el.dataset.id;
-            return fetch(url, { method: "DELETE", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (r) { return r.json(); });
+                ? Routing.generate('amzs_admin_gallery_delete_picture_route', {
+                    id: folderId,
+                    galleryPictureId: el.dataset.id
+                })
+                : Routing.generate('amzs_admin_gallery_delete_route', {
+                    id: el.dataset.id
+                });
+
+            return fetch(url, {
+                method: "DELETE",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            }).then(function (r) { return r.json(); });
         }))
             .then(function () { _load(folderId); })
             .catch(function (err) { alert("Có lỗi xảy ra khi xóa!"); console.error(err); })
             .finally(function () { btn.disabled = false; });
     }
 
-    //  add/edit
+    // add/edit
     function _openSubModal(url, loadingText) {
         fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
             .then(function (r) {
@@ -324,6 +342,7 @@
             })
             .catch(function (err) { alert("Không thể tải form!"); console.error(err); });
     }
+
     // xác nhận chọn ảnh
     function _confirm() {
         var pictures = Array.from(
@@ -338,6 +357,7 @@
         if (!pictures.length) return;
         console.log(pictures);
     }
+
     // cập nhật số lượng thanh nav dưới footer
     function _updateCount() {
         var body = document.getElementById(BODY_ID);
@@ -382,3 +402,4 @@
     }
 
 }());
+

@@ -55,18 +55,18 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script
-            type="module"
-            src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"
+
+    <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-umd.js"
             data-turbo-track="reload">
     </script>
 
-    <script
-            src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery.js') }}"
+    <script src="/bundles/fosjsrouting/js/router.min.js"></script>
+    <script src="/js/routing.js?callback=fos.Router.setData"></script>
+
+    <script src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery.js') }}"
             data-turbo-track="reload">
     </script>
-    <script
-            src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery_modal.js') }}"
+    <script src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery_modal.js') }}"
             data-turbo-track="reload">
     </script>
 {% endblock %}

@@ -22,39 +22,18 @@ class GalleryController extends AbstractController
 
     public function index(
         Request $request,
-        GalleryRepository $galleryRepository,
-        EntityManagerInterface $em
+        GalleryService $galleryService,
+        GalleryPictureService $galleryPictureService
     ): Response {
         $folderId = $request->query->getInt('folderId', 0);
+        $page     = $request->query->getInt('page', 1);
 
-        $currentFolder = ($folderId > 0) ? $galleryRepository->find($folderId) : null;
-
-        $galleryPicturesRepo = $em->getRepository(GalleryPictures::class);
-
-        if ($currentFolder === null) {
-            $folders = $galleryRepository->getAllGalleriesRoot();
-
-            $pictures = $galleryPicturesRepo->findPicturesInRoot();
-        } else {
-            $folders = $currentFolder->getChildren();
-            $pictures = $galleryPicturesRepo->findPicturesInFolder($currentFolder);
-        }
-
-        $breadcrumbs = [['id' => 0, 'name' => 'Thư mục gốc']];
-        if ($currentFolder !== null) {
-            $node = $currentFolder;
-            $pathNodes = [];
-            while ($node !== null) {
-                array_unshift($pathNodes, ['id' => $node->getId(), 'name' => $node->getName()]);
-                $node = $node->getParent();
-            }
-            $breadcrumbs = array_merge($breadcrumbs, $pathNodes);
-        }
+        $currentFolder = ($folderId > 0) ? $galleryService->find($folderId) : null;
 
         return $this->render('@AmzsGallery/gallery/index.html.twig', [
-            'folders'         => $folders,
-            'pictures'        => $pictures,
-            'breadcrumbs'     => $breadcrumbs,
+            'folders'         => $galleryService->getFolders($currentFolder),
+            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 18),
+            'breadcrumbs'     => $galleryService->getBreadcrumbs($currentFolder),
             'currentFolderId' => $folderId
         ]);
     }
@@ -173,36 +152,18 @@ class GalleryController extends AbstractController
 
     public function modal(
         Request $request,
-        GalleryRepository $galleryRepository,
-        EntityManagerInterface $em
+        GalleryService $galleryService,
+        GalleryPictureService $galleryPictureService
     ): Response {
-        $folderId      = $request->query->getInt('folderId', 0);
-        $currentFolder = ($folderId > 0) ? $galleryRepository->find($folderId) : null;
-        $picturesRepo  = $em->getRepository(GalleryPictures::class);
+        $folderId = $request->query->getInt('folderId', 0);
+        $page     = $request->query->getInt('page', 1);
 
-        if ($currentFolder === null) {
-            $folders  = $galleryRepository->getAllGalleriesRoot();
-            $pictures = $picturesRepo->findPicturesInRoot();
-        } else {
-            $folders  = $currentFolder->getChildren();
-            $pictures = $picturesRepo->findPicturesInFolder($currentFolder);
-        }
-
-        $breadcrumbs = [['id' => 0, 'name' => 'Thư mục gốc']];
-        if ($currentFolder !== null) {
-            $node = $currentFolder;
-            $pathNodes = [];
-            while ($node !== null) {
-                array_unshift($pathNodes, ['id' => $node->getId(), 'name' => $node->getName()]);
-                $node = $node->getParent();
-            }
-            $breadcrumbs = array_merge($breadcrumbs, $pathNodes);
-        }
+        $currentFolder = ($folderId > 0) ? $galleryService->find($folderId) : null;
 
         $data = [
-            'folders'         => $folders,
-            'pictures'        => $pictures,
-            'breadcrumbs'     => $breadcrumbs,
+            'folders'         => $galleryService->getFolders($currentFolder),
+            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 18),
+            'breadcrumbs'     => $galleryService->getBreadcrumbs($currentFolder),
             'currentFolderId' => $folderId,
             'isModal'         => true,
         ];
@@ -211,7 +172,6 @@ class GalleryController extends AbstractController
             return $this->render('@AmzsGallery/gallery/_content_modal.html.twig', $data);
         }
 
-        // Request thường → full modal page
         return $this->render('@AmzsGallery/gallery/modal.html.twig', $data);
     }
 

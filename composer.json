@@ -15,7 +15,8 @@
         "ext-json": "*",
         "symfony/serializer-pack": "^1.3",
         "amzs-cms/user-bundle": "dev-main",
-        "amzs-cms/core-bundle": "dev-main"
+        "amzs-cms/core-bundle": "dev-main",
+        "friendsofsymfony/jsrouting-bundle": "^2.8"
     },
     "repositories": [
         {

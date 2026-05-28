@@ -1,4 +1,3 @@
-
 var GalleryIndex = (function () {
     "use strict";
 
@@ -84,11 +83,25 @@ var GalleryIndex = (function () {
                 btnDeleteSelected.disabled = true;
                 await Promise.all(Array.from(selectedElements).map(function (el) {
                     var deleteUrl = el.dataset.type === "picture"
-                        ? "/cms/gallery/delete-picture/" + el.dataset.id
-                        : "/cms/gallery/delete/" + el.dataset.id;
-                    return fetch(deleteUrl, { method: "DELETE", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (r) { return r.json(); });
+                        ? Routing.generate('amzs_admin_gallery_delete_picture_route', {
+                            id: currentFolderId,
+                            galleryPictureId: el.dataset.id
+                        })
+                        : Routing.generate('amzs_admin_gallery_delete_route', {
+                            id: el.dataset.id
+                        });
+
+                    return fetch(deleteUrl, {
+                        method: "DELETE",
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    }).then(function (r) { return r.json(); });
                 }));
-                Turbo.visit("/cms/gallery?folderId=" + currentFolderId, { frame: FRAME_ID, action: "advance" });
+
+                Turbo.visit(
+                    Routing.generate('amzs_admin_gallery_index_route') + "?folderId=" + currentFolderId,
+                    { frame: FRAME_ID, action: "advance" }
+                );
+
             } catch (err) {
                 console.error(err);
                 alert("Có lỗi xảy ra khi xóa!");
@@ -102,7 +115,14 @@ var GalleryIndex = (function () {
         var btnAddFolder = e.target.closest("#btnAddFolder");
         if (btnAddFolder && spa.contains(btnAddFolder)) {
             e.preventDefault();
-            openAjaxModal("/cms/gallery/add/" + getCurrentFolderId(), "Đang tạo thư mục...");
+
+            openAjaxModal(
+                Routing.generate('amzs_admin_gallery_add_route', {
+                    id: getCurrentFolderId()
+                }),
+                "Đang tạo thư mục..."
+            );
+
             return;
         }
 
@@ -110,11 +130,18 @@ var GalleryIndex = (function () {
         var btnEditSelected = e.target.closest("#btnEditSelected");
         if (btnEditSelected && spa.contains(btnEditSelected)) {
             e.preventDefault();
+
             var selectedEl = spa.querySelector(".gallery-item.selected");
             if (!selectedEl) return;
+
             var editUrl = selectedEl.dataset.type === "folder"
-                ? "/cms/gallery/edit/" + selectedEl.dataset.id
-                : "/cms/gallery/edit-picture/" + selectedEl.dataset.id;
+                ? Routing.generate('amzs_admin_gallery_edit_route', {
+                    id: selectedEl.dataset.id
+                })
+                : Routing.generate('amzs_admin_gallery_edit_picture_route', {
+                    galleryPictureId: selectedEl.dataset.id
+                });
+
             openAjaxModal(editUrl, "Đang lưu thay đổi...");
             return;
         }
@@ -151,14 +178,28 @@ var GalleryIndex = (function () {
 
         try {
             if (btnUpload) { btnUpload.disabled = true; btnUpload.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang tải...'; }
+
             await Promise.all(files.map(function (file) {
                 var formData = new FormData();
                 formData.append("file", file);
                 formData.append("folderId", currentFolderId);
-                return fetch("/cms/gallery/upload", { method: "POST", body: formData }).then(function (r) { return r.json(); });
+
+                return fetch(
+                    Routing.generate('amzs_admin_gallery_upload_route'),
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                ).then(function (r) { return r.json(); });
             }));
+
             hiddenInput.value = "";
-            Turbo.visit("/cms/gallery?folderId=" + currentFolderId, { frame: FRAME_ID, action: "advance" });
+
+            Turbo.visit(
+                Routing.generate('amzs_admin_gallery_index_route') + "?folderId=" + currentFolderId,
+                { frame: FRAME_ID, action: "advance" }
+            );
+
         } catch (err) {
             console.error(err); alert("Upload thất bại!");
         } finally {
@@ -233,7 +274,11 @@ var GalleryIndex = (function () {
                     submitEvent.preventDefault();
                     var submitBtn    = form.querySelector("[type='submit']");
                     var originalText = submitBtn ? submitBtn.innerHTML : "";
-                    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ' + loadingText; }
+
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ' + loadingText;
+                    }
 
                     fetch(form.action, {
                         method: form.method || "POST",
@@ -246,15 +291,25 @@ var GalleryIndex = (function () {
                     })
                     .then(function () {
                         modalInstance.hide();
-                        Turbo.visit("/cms/gallery?folderId=" + getCurrentFolderId(), { frame: FRAME_ID, action: "advance" });
+
+                        Turbo.visit(
+                            Routing.generate('amzs_admin_gallery_index_route') + "?folderId=" + getCurrentFolderId(),
+                            { frame: FRAME_ID, action: "advance" }
+                        );
                     })
                     .catch(function (err) {
                         console.error(err); alert("Có lỗi xảy ra khi lưu!");
-                        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalText; }
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        }
                     });
                 });
             }
-            modalElement.addEventListener("hidden.bs.modal", function () { modalContainer.remove(); });
+
+            modalElement.addEventListener("hidden.bs.modal", function () {
+                modalContainer.remove();
+            });
         })
         .catch(function (err) {
             console.error("Lỗi AJAX Modal:", err);
@@ -265,3 +320,4 @@ var GalleryIndex = (function () {
     return { updateSelectionCount: updateSelectionCount };
 
 }());
+

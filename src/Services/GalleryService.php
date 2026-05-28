@@ -2,41 +2,47 @@
 
 namespace AmzsCMS\GalleryBundle\Services;
 
+use AmzsCMS\GalleryBundle\Entity\Gallery;
 use AmzsCMS\GalleryBundle\Repository\GalleryRepository;
-use Doctrine\ORM\Query;
 
 class GalleryService
 {
-    private GalleryRepository $galleryRepository;
+    private $galleryRepository;
 
-    public function __construct(
-         GalleryRepository $galleryRepository
-    )
+    public function __construct(GalleryRepository $galleryRepository)
     {
         $this->galleryRepository = $galleryRepository;
     }
 
-    public function find($id, $lockMode = null, $lockVersion = null)
+    public function find($id)
     {
-        return $this->galleryRepository->find($id, $lockMode, $lockVersion);
+        return $this->galleryRepository->find($id);
     }
 
-    public function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+    public function getFolders(?Gallery $currentFolder)
     {
-        return $this->galleryRepository->findBy($criteria, $orderBy, $limit, $offset);
+        if ($currentFolder === null) {
+            return $this->galleryRepository->getAllGalleriesRoot();
+        }
+
+        return $currentFolder->getChildren();
     }
 
-    public function getPaginated($keyword, $filters)
-    {
-        return $this->galleryRepository->getPaginated($keyword, 'post', $filters)
-            ->orderBy('gallery.createdAt', 'DESC')
-            ->getQuery()->setHint(Query::HINT_READ_ONLY, true);
-    }
 
-    public function getPaginatedDetail($keyword, $filters)
+    public function getBreadcrumbs(?Gallery $currentFolder): array
     {
-        return $this->galleryPictureRepository->getPaginatedDetail($keyword, 'post', $filters)
-            ->orderBy('gallery.createdAt', 'DESC')
-            ->getQuery()->setHint(Query::HINT_READ_ONLY, true);
+        $breadcrumbs = [['id' => 0, 'name' => 'Thư mục gốc']];
+
+        if ($currentFolder !== null) {
+            $node = $currentFolder;
+            $pathNodes = [];
+            while ($node !== null) {
+                array_unshift($pathNodes, ['id' => $node->getId(), 'name' => $node->getName()]);
+                $node = $node->getParent();
+            }
+            $breadcrumbs = array_merge($breadcrumbs, $pathNodes);
+        }
+
+        return $breadcrumbs;
     }
 }
