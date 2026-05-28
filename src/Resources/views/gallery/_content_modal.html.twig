@@ -42,11 +42,12 @@
                     </a>
                 {% endif %}
 
-                <button type="button" id="btnAddFolder" class="btn btn-primary">
+                {# Thêm tiền tố modal- vào ID #}
+                <button type="button" id="modal-btnAddFolder" class="btn btn-primary">
                     <i class="fas fa-folder-plus"></i> Thêm thư mục
                 </button>
 
-                <button type="button" class="btn btn-sm btn-dark" id="btnUploadImg">
+                <button type="button" class="btn btn-sm btn-dark" id="modal-btnUploadImg">
                     <i class="ti ti-cloud-upload"></i> Tải ảnh lên
                 </button>
 
@@ -54,7 +55,7 @@
         </div>
 
         <div class="manager-body p-6">
-            <div class="gallery-grid" id="galleryGrid">
+            <div class="gallery-grid" id="modal-galleryGrid">
 
                 {% for folder in folders %}
                     <div class="col-folder">
@@ -90,14 +91,15 @@
         </div>
 
         <div class="manager-foot d-flex align-items-center justify-content-between p-6 border-top bg-white">
-            <span class="count-badge" id="selectedCount">Đã chọn: 0 ảnh</span>
+            {# Thêm tiền tố modal- vào ID #}
+            <span class="count-badge" id="modal-selectedCount">Đã chọn: 0 ảnh</span>
             <div class="foot-actions d-flex gap-2">
-                <button class="btn btn-secondary btn-sm" id="btnDeselectAll" disabled>Bỏ chọn tất cả</button>
-                <button class="btn btn-warning btn-sm d-none" id="btnEditSelected">
+                <button class="btn btn-secondary btn-sm" id="modal-btnDeselectAll" disabled>Bỏ chọn tất cả</button>
+                <button class="btn btn-warning btn-sm d-none" id="modal-btnEditSelected">
                     <i class="ti ti-edit"></i> Sửa
                 </button>
-                <button class="btn btn-light-danger btn-sm" id="btnDeleteSelected" disabled>Xóa đã chọn</button>
-                <button class="btn btn-primary btn-sm" id="btnConfirmSelect" disabled>
+                <button class="btn btn-light-danger btn-sm" id="modal-btnDeleteSelected" disabled>Xóa đã chọn</button>
+                <button class="btn btn-primary btn-sm" id="modal-btnConfirmSelect" disabled>
                     Áp dụng ảnh đã chọn (<span class="count">0</span>)
                 </button>
             </div>

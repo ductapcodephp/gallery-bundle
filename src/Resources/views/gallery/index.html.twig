@@ -61,11 +61,10 @@
             data-turbo-track="reload">
     </script>
 
-    {# phải tắt js một trong 2 tránh bị gọi trên cùng 1 trang gây lỗi cho modal #}
-{#    <script#}
-{#            src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery.js') }}"#}
-{#            data-turbo-track="reload">#}
-{#    </script>#}
+    <script
+            src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery.js') }}"
+            data-turbo-track="reload">
+    </script>
     <script
             src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery_modal.js') }}"
             data-turbo-track="reload">

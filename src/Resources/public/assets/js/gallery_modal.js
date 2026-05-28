@@ -1,4 +1,3 @@
-
 (function () {
     "use strict";
 
@@ -11,7 +10,6 @@
     var _modalInst   = null;
     var _folderTimer = null;
 
-    // ── Inject CSS 1 lần ──────────────────────────────────────────────────────
     var _style = document.createElement("style");
     _style.textContent = [
         "#" + BODY_ID + " { transition: opacity 0.15s ease; }",
@@ -23,9 +21,10 @@
         "}"
     ].join("\n");
     document.head.appendChild(_style);
-
-    // lắng nghe attribute mở modal
+    //lắng nghe nút đặt data-amzs-gallery-modal attribute để mở modal
     document.addEventListener("click", function (e) {
+        if (e.target.closest("#" + MODAL_ID)) return;
+
         var t = e.target.closest("[data-amzs-gallery-modal]");
         if (!t) return;
         e.preventDefault();
@@ -33,14 +32,12 @@
         _open();
     });
 
-    // ── Mở modal
     function _open() {
         _ensureShell();
         _load(0);
         _modalInst.show();
     }
-
-    // ── Tạo shell 1 lần
+    // khởi tạo modal
     function _ensureShell() {
         var existing = document.getElementById(MODAL_ID);
         if (existing) {
@@ -53,6 +50,7 @@
         _modalEl.id = MODAL_ID;
         _modalEl.setAttribute("class", "modal fade");
         _modalEl.setAttribute("tabindex", "-1");
+        _modalEl.setAttribute("data-amzs-gallery-modal-container", "true");
 
         var dialog  = document.createElement("div");
         dialog.setAttribute("class", "modal-dialog modal-xl modal-dialog-centered");
@@ -83,8 +81,7 @@
         _modalInst = new bootstrap.Modal(_modalEl, { backdrop: "static" });
         _modalEl.addEventListener("hidden.bs.modal", _onHidden);
     }
-
-    // load dữ liệu ra twig
+// render data gallery
     function _load(folderId) {
         var body    = document.getElementById(BODY_ID);
         var isEmpty = body.innerHTML.trim() === "";
@@ -118,7 +115,7 @@
                     body.innerHTML = html;
                     body.classList.remove("amzs-fading");
                     body.style.position = "";
-                    body.offsetHeight; // force reflow
+                    body.offsetHeight;
                     body.style.opacity = "1";
                     _bind(body);
                     _updateCount();
@@ -128,7 +125,7 @@
                 body.classList.remove("amzs-fading");
                 body.style.opacity = "1";
                 body.innerHTML = '<div class="alert alert-danger m-4">Lỗi tải thư viện: ' + err.message + '</div>';
-                console.error("[AmzsGallery]", err);
+                console.error("[AmzsGallery Modal]", err);
             });
     }
 
@@ -142,23 +139,23 @@
         c.removeEventListener("dblclick", _onDblClick);
     }
 
-    //sự kiện click trên modal
+    //xử lý sự kiện clivk
     function _onClick(e) {
+
         var nav = e.target.closest("[data-modal-navigate]");
         if (nav) {
             e.preventDefault();
             _load(nav.dataset.modalNavigate);
             return;
         }
+
         var item = e.target.closest(".gallery-item");
         if (item) {
             if (item.dataset.type === "picture") {
-
-                    item.classList.toggle("selected");
-                }
+                item.classList.toggle("selected");
                 _updateCount();
                 return;
-
+            }
             if (item.dataset.type === "folder") {
                 e.preventDefault();
                 if (_folderTimer) { clearTimeout(_folderTimer); _folderTimer = null; return; }
@@ -171,31 +168,29 @@
             }
         }
 
-        if (e.target.closest("#btnDeselectAll")) {
-            document.getElementById(BODY_ID)
-                .querySelectorAll(".gallery-item.selected")
+        var body = document.getElementById(BODY_ID);
+
+        if (e.target.closest("#modal-btnDeselectAll")) {
+            body.querySelectorAll(".gallery-item.selected")
                 .forEach(function (el) { el.classList.remove("selected"); });
             _updateCount();
             return;
         }
 
-        if (e.target.closest("#btnUploadImg")) { _triggerUpload(); return; }
+        if (e.target.closest("#modal-btnUploadImg")) { _triggerUpload(); return; }
 
-        // Xóa
-        var btnDel = e.target.closest("#btnDeleteSelected");
+        var btnDel = e.target.closest("#modal-btnDeleteSelected");
         if (btnDel) { _deleteSelected(btnDel); return; }
 
-        // Thêm thư mục
-        if (e.target.closest("#btnAddFolder")) {
+        if (e.target.closest("#modal-btnAddFolder")) {
             e.preventDefault();
             _openSubModal("/cms/gallery/add/" + _getFolderId(), "Đang tạo thư mục...");
             return;
         }
 
-        // Sửa
-        if (e.target.closest("#btnEditSelected")) {
+        if (e.target.closest("#modal-btnEditSelected")) {
             e.preventDefault();
-            var sel = document.getElementById(BODY_ID).querySelector(".gallery-item.selected");
+            var sel = body.querySelector(".gallery-item.selected");
             if (!sel) return;
             var url = sel.dataset.type === "folder"
                 ? "/cms/gallery/edit/" + sel.dataset.id
@@ -204,11 +199,22 @@
             return;
         }
 
-        // Confirm
-        if (e.target.closest("#btnConfirmSelect")) { _confirm(); return; }
+        if (e.target.closest("#modal-btnCropSelected")) {
+            e.preventDefault();
+            var selPic = body.querySelector(".gallery-item.selected[data-type='picture']");
+            if (!selPic || typeof AmzsGalleryCrop === "undefined") return;
+            AmzsGalleryCrop.open({
+                id   : selPic.dataset.id,
+                image: selPic.querySelector("img") ? selPic.querySelector("img").src : "",
+                name : selPic.querySelector(".img-name") ? selPic.querySelector(".img-name").innerText.trim() : ""
+            }, function () { _load(_getFolderId()); });
+            return;
+        }
+
+        if (e.target.closest("#modal-btnConfirmSelect")) { _confirm(); return; }
     }
 
-    // dbclick chọn hoặc bỏ chọn mục hiện tại
+    //  Dblclick  chọn hoặc hủy chọn folder
     function _onDblClick(e) {
         var folder = e.target.closest(".gallery-item[data-type='folder']");
         if (!folder) return;
@@ -218,7 +224,7 @@
         _updateCount();
     }
 
-    // upload ảnh
+    //  Upload
     function _triggerUpload() {
         var input = document.getElementById("amzsGalleryFileInput");
         if (!input) {
@@ -233,7 +239,8 @@
                 var files    = Array.from(input.files);
                 if (!files.length) return;
                 var folderId = _getFolderId();
-                var btn      = document.getElementById(BODY_ID).querySelector("#btnUploadImg");
+                // Update ID selector here too
+                var btn      = document.getElementById(BODY_ID).querySelector("#modal-btnUploadImg");
                 var orig     = btn ? btn.innerHTML : "";
                 if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang tải...'; }
                 Promise.all(files.map(function (file) {
@@ -242,29 +249,22 @@
                     fd.append("folderId", folderId);
                     return fetch("/cms/gallery/upload", { method: "POST", body: fd }).then(function (r) { return r.json(); });
                 }))
-                    .then(function () {
-                        input.value = "";
-                        _load(folderId);
-                    })
-                    .catch(function (err) {
-                        alert("Upload thất bại!");
-                        console.error(err);
-                    })
-                    .finally(function () {
-                        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-                    });
+                    .then(function () { input.value = ""; _load(folderId); })
+                    .catch(function (err) { alert("Upload thất bại!"); console.error(err); })
+                    .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = orig; } });
             });
         }
         input.value = "";
         input.click();
     }
 
-    // Xóa hàng loạt
+    //  Xóa hàng loạt
     function _deleteSelected(btn) {
         if (!confirm("Bạn có chắc chắn muốn xóa các mục đã chọn?")) return;
-        var selected  = Array.from(document.getElementById(BODY_ID).querySelectorAll(".gallery-item.selected"));
-        var folderId  = _getFolderId();
-        btn.disabled  = true;
+        var body     = document.getElementById(BODY_ID);
+        var selected = Array.from(body.querySelectorAll(".gallery-item.selected"));
+        var folderId = _getFolderId();
+        btn.disabled = true;
         Promise.all(selected.map(function (el) {
             var url = el.dataset.type === "picture"
                 ? "/cms/gallery/delete-picture/" + el.dataset.id
@@ -276,7 +276,7 @@
             .finally(function () { btn.disabled = false; });
     }
 
-    // add/edit thư mục
+    //  add/edit
     function _openSubModal(url, loadingText) {
         fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
             .then(function (r) {
@@ -313,13 +313,9 @@
                                 if (r.ok || r.status === 201) return r.json();
                                 throw new Error("Lỗi server");
                             })
-                            .then(function () {
-                                inst.hide();
-                                _load(_getFolderId());
-                            })
+                            .then(function () { inst.hide(); _load(_getFolderId()); })
                             .catch(function (err) {
-                                alert("Có lỗi xảy ra khi lưu!");
-                                console.error(err);
+                                alert("Có lỗi xảy ra khi lưu!"); console.error(err);
                                 if (btn) { btn.disabled = false; btn.innerHTML = orig; }
                             });
                     });
@@ -328,29 +324,21 @@
             })
             .catch(function (err) { alert("Không thể tải form!"); console.error(err); });
     }
-
-   // comfirm ảnh và có thể tạo sự kiện
+    // xác nhận chọn ảnh
     function _confirm() {
         var pictures = Array.from(
             document.getElementById(BODY_ID).querySelectorAll(".gallery-item.selected[data-type='picture']")
         ).map(function (el) {
             return {
-                id    : el.dataset.id,
-                image : el.querySelector("img") ? el.querySelector("img").src : null,
-                name  : el.querySelector(".img-name") ? el.querySelector(".img-name").innerText.trim() : null
+                id   : el.dataset.id,
+                image: el.querySelector("img") ? el.querySelector("img").src : null,
+                name : el.querySelector(".img-name") ? el.querySelector(".img-name").innerText.trim() : null
             };
         });
         if (!pictures.length) return;
-
-        var eventName = (_trigger && _trigger.dataset.event) ? _trigger.dataset.event : "amzsGalleryPicked";
-        document.dispatchEvent(new CustomEvent(eventName, {
-            detail  : { pictures: pictures, trigger: _trigger },
-            bubbles : true
-        }));
-        _modalInst.hide();
+        console.log(pictures);
     }
-
-    // update số lượng thanh nav ở footer
+    // cập nhật số lượng thanh nav dưới footer
     function _updateCount() {
         var body = document.getElementById(BODY_ID);
         if (!body) return;
@@ -359,27 +347,29 @@
         var pics = body.querySelectorAll(".gallery-item.selected[data-type='picture']");
         var n    = pics.length;
 
-        var badge = body.querySelector("#selectedCount");
+        var badge = body.querySelector("#modal-selectedCount");
         if (badge) badge.innerText = "Đã chọn: " + n + " ảnh";
 
-        var deSel = body.querySelector("#btnDeselectAll");
+        var deSel = body.querySelector("#modal-btnDeselectAll");
         if (deSel) deSel.disabled = all.length === 0;
 
-        var del = body.querySelector("#btnDeleteSelected");
+        var del = body.querySelector("#modal-btnDeleteSelected");
         if (del) del.disabled = all.length === 0;
 
-        var conf = body.querySelector("#btnConfirmSelect");
+        var conf = body.querySelector("#modal-btnConfirmSelect");
         if (conf) {
             conf.disabled = n === 0;
             var c = conf.querySelector(".count");
             if (c) c.innerText = n;
         }
 
-        var edit = body.querySelector("#btnEditSelected");
+        var edit = body.querySelector("#modal-btnEditSelected");
         if (edit) edit.classList.toggle("d-none", all.length !== 1);
+
+        var crop = body.querySelector("#modal-btnCropSelected");
+        if (crop) crop.classList.toggle("d-none", !(pics.length === 1 && all.length === 1));
     }
 
-    // Lấy id của folder
     function _getFolderId() {
         var body  = document.getElementById(BODY_ID);
         var frame = body ? body.querySelector("turbo-frame#media_library_modal_spa") : null;
