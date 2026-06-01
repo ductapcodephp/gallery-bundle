@@ -24,7 +24,15 @@ var GalleryIndex = (function () {
 
         var spa = _getSPA();
         if (!spa) return;
-
+        var pageLink = e.target.closest(".manager-pagination .page-link");
+        if (pageLink && spa.contains(pageLink)) {
+            var href = pageLink.getAttribute("href");
+            if (href && href !== "#") {
+                e.preventDefault();
+                Turbo.visit(href, { frame: FRAME_ID, action: "advance" });
+                return;
+            }
+        }
         var galleryItem = e.target.closest(".gallery-item");
         if (galleryItem && spa.contains(galleryItem)) {
             var type = galleryItem.dataset.type;

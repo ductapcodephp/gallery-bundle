@@ -169,26 +169,34 @@
                             {% if pictures.current > 1 %}
                                 <li class="page-item">
                                     <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
-                                       href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge(app.request.query.all)|merge({'page': pictures.current - 1})) }}"
+                                       href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current - 1}) }}"
+                                       data-turbo-action="advance"
+                                       data-turbo-prefetch="false"
                                        aria-label="Previous">
                                         <i class="ti ti-chevron-left"></i>
                                     </a>
                                 </li>
                             {% else %}
                                 <li class="page-item disabled">
-                                    <span class="page-link rounded-2 border-0 bg-light text-muted"><i class="ti ti-chevron-left"></i></span>
+                        <span class="page-link rounded-2 border-0 bg-light text-muted">
+                            <i class="ti ti-chevron-left"></i>
+                        </span>
                                 </li>
                             {% endif %}
 
                             {% for page in 1..pictures.pageCount %}
                                 {% if page == pictures.current %}
                                     <li class="page-item active" aria-current="page">
-                                        <span class="page-link rounded-2 border-0 bg-primary text-white fw-bold">{{ page }}</span>
+                            <span class="page-link rounded-2 border-0 bg-primary text-white fw-bold">
+                                {{ page }}
+                            </span>
                                     </li>
                                 {% else %}
                                     <li class="page-item">
                                         <a class="page-link rounded-2 border-0 text-dark text-hover-primary bg-hover-light"
-                                           href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge(app.request.query.all)|merge({'page': page})) }}">
+                                           href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': page}) }}"
+                                           data-turbo-action="advance"
+                                           data-turbo-prefetch="false">
                                             {{ page }}
                                         </a>
                                     </li>
@@ -198,14 +206,18 @@
                             {% if pictures.current < pictures.pageCount %}
                                 <li class="page-item">
                                     <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
-                                       href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge(app.request.query.all)|merge({'page': pictures.current + 1})) }}"
+                                       href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current + 1}) }}"
+                                       data-turbo-action="advance"
+                                       data-turbo-prefetch="false"
                                        aria-label="Next">
                                         <i class="ti ti-chevron-right"></i>
                                     </a>
                                 </li>
                             {% else %}
                                 <li class="page-item disabled">
-                                    <span class="page-link rounded-2 border-0 bg-light text-muted"><i class="ti ti-chevron-right"></i></span>
+                        <span class="page-link rounded-2 border-0 bg-light text-muted">
+                            <i class="ti ti-chevron-right"></i>
+                        </span>
                                 </li>
                             {% endif %}
 

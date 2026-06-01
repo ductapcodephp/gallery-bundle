@@ -1,3 +1,5 @@
+
+
 (function () {
     "use strict";
 
@@ -88,7 +90,7 @@
     }
 
     // render data gallery
-    function _load(folderId) {
+    function _load(folderId,page) {
         var body    = document.getElementById(BODY_ID);
         var isEmpty = body.innerHTML.trim() === "";
 
@@ -107,7 +109,7 @@
             }
         }
 
-        fetch(MODAL_URL + "?folderId=" + folderId, {
+        fetch(MODAL_URL + "?folderId=" + folderId + "&page" + page, {
             headers: { "X-Requested-With": "XMLHttpRequest" }
         })
             .then(function (r) {
@@ -147,6 +149,12 @@
 
     //xử lý sự kiện click
     function _onClick(e) {
+        var pageLink = e.target.closest("[data-modal-page]");
+        if (pageLink) {
+            e.preventDefault();
+            _load(pageLink.dataset.modalNavigate, pageLink.dataset.modalPage);
+            return;
+        }
         var nav = e.target.closest("[data-modal-navigate]");
         if (nav) {
             e.preventDefault();
@@ -354,8 +362,18 @@
                 name : el.querySelector(".img-name") ? el.querySelector(".img-name").innerText.trim() : null
             };
         });
+
         if (!pictures.length) return;
-        console.log(pictures);
+
+        document.dispatchEvent(new CustomEvent("amzsGalleryPicked", {
+            bubbles: true,
+            detail: {
+                pictures: pictures,
+                trigger : _trigger
+            }
+        }));
+
+        _modalInst.hide();
     }
 
     // cập nhật số lượng thanh nav dưới footer

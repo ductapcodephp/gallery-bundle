@@ -32,7 +32,7 @@ class GalleryController extends AbstractController
 
         return $this->render('@AmzsGallery/gallery/index.html.twig', [
             'folders'         => $galleryService->getFolders($currentFolder),
-            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 18),
+            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 21),
             'breadcrumbs'     => $galleryService->getBreadcrumbs($currentFolder),
             'currentFolderId' => $folderId
         ]);
@@ -162,7 +162,7 @@ class GalleryController extends AbstractController
 
         $data = [
             'folders'         => $galleryService->getFolders($currentFolder),
-            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 18),
+            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 21),
             'breadcrumbs'     => $galleryService->getBreadcrumbs($currentFolder),
             'currentFolderId' => $folderId,
             'isModal'         => true,

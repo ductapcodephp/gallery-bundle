@@ -39,7 +39,7 @@ return [
     FOS\JsRoutingBundle\FOSJsRoutingBundle::class => ['all' => true],
 ];
 ```
-### Step 3 : Add route in routes.yaml (if don't find this file you can create)
+### Step 3 : Add route in routes.yaml (if don't find this file you can create in your project)
 fos_js_routing:
   resource: "@FOSJsRoutingBundle/Resources/config/routing/routing.xml"
 
