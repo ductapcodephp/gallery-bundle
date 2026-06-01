@@ -28,8 +28,6 @@
 
         console.group("[GalleryPicker] amzsGalleryPicked nhận được");
         console.log("pictures :", pictures);
-        console.log("trigger  :", trigger);
-
         if (!pictures.length || !trigger) {
             console.warn("→ Bỏ qua: không có ảnh hoặc không có trigger");
             console.groupEnd();
@@ -37,7 +35,6 @@
         }
 
         var container = trigger.closest("[data-gallery-target]");
-        console.log("container:", container);
 
         if (!container) {
             console.warn("→ Bỏ qua: không tìm thấy [data-gallery-target] quanh trigger");
@@ -60,11 +57,9 @@
         if (preview) {
             if (preview.tagName === "IMG") {
                 preview.src = path;
-                console.log("→ set img.src");
             } else {
                 preview.style.backgroundImage = "url('" + path + "')";
                 preview.classList.remove("image-input-empty", "image-input-placeholder");
-                console.log("→ set backgroundImage");
             }
         } else {
             console.warn("→ Không tìm thấy preview");
@@ -93,7 +88,7 @@
             var el = all[i];
             if (el.tagName === "INPUT" || el.tagName === "BUTTON" || el.tagName === "A") continue;
             if (el.style.backgroundImage) return el;
-        }
+        }1
         return container.querySelector("img") || null;
     }
 
