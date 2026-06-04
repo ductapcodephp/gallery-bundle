@@ -417,8 +417,6 @@
         var edit = body.querySelector("#modal-btnEditSelected");
         if (edit) edit.classList.toggle("d-none", all.length !== 1);
 
-        var crop = body.querySelector("#modal-btnCropSelected");
-        if (crop) crop.classList.toggle("d-none", !(pics.length === 1 && all.length === 1));
     }
 
     function _getFolderId() {
