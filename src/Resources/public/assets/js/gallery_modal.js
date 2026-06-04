@@ -101,29 +101,55 @@
     }
 
     // render data gallery
-    function _load(folderId,page) {
-        var body    = document.getElementById(BODY_ID);
+    function _load(folderId, page) {
+        var body  = document.getElementById(BODY_ID);
+        var frame = document.getElementById("gallery_main_content");
         var isEmpty = body.innerHTML.trim() === "";
+
+        page = page || 1;
+        var requestUrl = MODAL_URL || (typeof Routing !== "undefined" ? Routing.generate('amzs_admin_gallery_modal_route') : "");
+        var fullUrl    = requestUrl + "?folderId=" + folderId + "&page=" + page;
 
         if (isEmpty) {
             body.innerHTML = '<div style="min-height:300px;display:flex;align-items:center;justify-content:center">'
                 + '<span class="spinner-border spinner-border-sm me-2"></span> Đang tải...'
                 + '</div>';
-        } else {
-            body.classList.add("amzs-fading");
-            body.style.position = "relative";
-            if (!body.querySelector(".amzs-overlay")) {
-                var ov = document.createElement("div");
-                ov.className = "amzs-overlay";
-                ov.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
-                body.appendChild(ov);
-            }
+
+            fetch(fullUrl, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+                .then(function (html) {
+                    _unbind(body);
+                    body.innerHTML = html;
+                    _bind(body);
+                    _updateCount();
+                })
+                .catch(function (err) {
+                    body.innerHTML = '<div class="alert alert-danger m-4">Lỗi tải thư viện: ' + err.message + '</div>';
+                });
+
+            return;
         }
 
-        var requestUrl = MODAL_URL || (typeof Routing !== "undefined" ? Routing.generate('amzs_admin_gallery_modal_route') : "");
+        var targetContainer = frame ? frame : body;
 
-        fetch(requestUrl + "?folderId=" + folderId + "&page" + page, {
-            headers: { "X-Requested-With": "XMLHttpRequest" }
+        targetContainer.classList.add("amzs-fading");
+        targetContainer.style.position = "relative";
+        if (!targetContainer.querySelector(".amzs-overlay")) {
+            var ov = document.createElement("div");
+            ov.className = "amzs-overlay";
+            ov.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+            targetContainer.appendChild(ov);
+        }
+
+        fetch(fullUrl, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "Turbo-Frame": "gallery_main_content"
+            }
         })
             .then(function (r) {
                 if (!r.ok) throw new Error("HTTP " + r.status);
@@ -131,21 +157,29 @@
             })
             .then(function (html) {
                 _unbind(body);
-                body.style.opacity = "0";
+                targetContainer.style.opacity = "0";
+
                 setTimeout(function () {
-                    body.innerHTML = html;
-                    body.classList.remove("amzs-fading");
-                    body.style.position = "";
-                    body.offsetHeight;
-                    body.style.opacity = "1";
-                    _bind(body);
+                    if (frame) {
+                        frame.outerHTML = html;
+                    } else {
+                        body.innerHTML = html;
+                    }
+
+                    var newFrame = document.getElementById("gallery_main_content");
+                    if (newFrame) {
+                        newFrame.classList.remove("amzs-fading");
+                        newFrame.style.position = "";
+                        newFrame.style.opacity = "1";
+                    }
+
+                    _bind(document.getElementById(BODY_ID));
                     _updateCount();
                 }, 120);
             })
             .catch(function (err) {
-                body.classList.remove("amzs-fading");
-                body.style.opacity = "1";
-                body.innerHTML = '<div class="alert alert-danger m-4">Lỗi tải thư viện: ' + err.message + '</div>';
+                targetContainer.classList.remove("amzs-fading");
+                targetContainer.style.opacity = "1";
                 console.error("[AmzsGallery Modal]", err);
             });
     }
