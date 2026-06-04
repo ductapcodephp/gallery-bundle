@@ -29,7 +29,7 @@ class GalleryPictureService
         return $this->galleryPicturesRepository->findBy($criteria, $orderBy, $limit, $offset);
     }
 
-    public function getPaginatedPictures(?object $currentFolder, int $page, int $limit = 12): PaginationInterface
+    public function getPaginatedPictures(?object $currentFolder, int $page, int $limit = 1): PaginationInterface
     {
         if ($currentFolder === null) {
             $query = $this->galleryPicturesRepository->getPicturesInRootQuery();
@@ -39,4 +39,6 @@ class GalleryPictureService
 
         return $this->paginator->paginate($query, $page, $limit);
     }
+
+
 }

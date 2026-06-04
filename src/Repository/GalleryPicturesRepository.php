@@ -4,6 +4,8 @@ namespace AmzsCMS\GalleryBundle\Repository;
 
 use AmzsCMS\GalleryBundle\Entity\Gallery;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 use AmzsCMS\GalleryBundle\Entity\GalleryPictures;
@@ -52,5 +54,31 @@ class GalleryPicturesRepository extends ServiceEntityRepository
             ->leftJoin('gp.picture', 'p')
             ->where('gp.gallery IS NULL')
             ->getQuery();
+    }
+    /**
+     * @throws NonUniqueResultException
+     * @throws NoResultException
+     */
+    public function countPicturesInRoot(): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.gallery IS NULL')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @throws NonUniqueResultException
+     * @throws NoResultException
+     */
+    public function countPicturesInFolder(object $folder): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.gallery = :folder')
+            ->setParameter('folder', $folder)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

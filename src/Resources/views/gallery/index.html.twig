@@ -6,12 +6,12 @@
 
 {% block stylesheets %}
     {{ parent() }}
-
     <link
             rel="stylesheet"
             href="{{ asset(get_path_gallery_cms_asset() ~ 'assets/css/gallery.css') }}"
             data-turbo-track="reload"
     >
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 {% endblock %}
 
 {% block toolbar %}
@@ -31,23 +31,62 @@
 {% endblock %}
 
 {% block body %}
-    <div id="gallerySPA">
-        {% include '@AmzsGallery/gallery/_content.html.twig' %}
+    <div class="card shadow-sm media-manager-wrapper">
+        <div id="gallery-modal-wrapper" class="d-flex" style="min-height: 550px;">
+
+            <div class="amzs-sidebar border-end p-5" style="width: 260px; min-width: 260px; background: #fcfcfd;">
+                <p class="amzs-sidebar-title fw-bold text-muted mb-4 small text-uppercase">Thư mục</p>
+
+                <ul class="amzs-folder-list list-unstyled" id="gallery-sidebar-tree-wrapper">
+                    <li class="mb-2">
+                        <a href="{{ path('amzs_admin_gallery_index_route', {folderId: 0}) }}"
+                           class="amzs-folder-item d-flex align-items-center p-2 rounded text-dark text-hover-primary {{ currentFolderId == 0 ? 'bg-light-primary text-primary fw-bold' : '' }}"
+                           data-turbo-frame="media_library_spa"
+                           data-turbo-action="advance">
+                            <span><i class="ti ti-folders me-2" style="font-size: 1.15rem;"></i>Tất cả ảnh</span>
+                        </a>
+                    </li>
+
+                    {% include '@AmzsGallery/gallery/_folder_tree_index.html.twig' with {
+                        folders: sidebarFolders,
+                        currentFolderId: currentFolderId
+                    } %}
+                </ul>
+            </div>
+
+            <div class="amzs-main flex-grow-1 bg-white">
+                <div id="gallerySPA">
+                    {% include '@AmzsGallery/gallery/_content.html.twig' %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="amzs-footer d-flex align-items-center justify-content-between p-5 border-top bg-light">
+            <div class="amzs-footer-left">
+                <span class="text-muted small fw-bold" id="selectedCount">Chưa chọn ảnh nào</span>
+            </div>
+
+            <div class="amzs-footer-right d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm px-3" id="btnDeselectAll" disabled>Bỏ chọn tất cả</button>
+                <button class="btn btn-warning btn-sm px-3 d-none" id="btnEditSelected"><i class="ti ti-edit"></i> Sửa</button>
+                <button class="btn btn-danger btn-sm px-3" id="btnDeleteSelected" disabled><i class="ti ti-trash"></i> Xóa ảnh đã chọn</button>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
 
+    <script src="/bundles/fosjsrouting/js/router.min.js"></script>
+    <script src="/js/routing.js?callback=fos.Router.setData"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-umd.js"
             data-turbo-track="reload">
     </script>
 
-    <script src="/bundles/fosjsrouting/js/router.min.js"></script>
-    <script src="/js/routing.js?callback=fos.Router.setData"></script>
-
     <script src="{{ asset(get_path_gallery_cms_asset() ~ 'assets/js/gallery.js') }}"
             data-turbo-track="reload">
     </script>
-
 {% endblock %}

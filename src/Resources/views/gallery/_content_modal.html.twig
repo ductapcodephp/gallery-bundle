@@ -1,171 +1,49 @@
-<turbo-frame
-        id="media_library_modal_spa"
-        data-current-folder="{{ currentFolderId }}"
->
-    <div class="media-manager-wrapper card shadow-sm">
 
-        <div class="manager-toolbar d-flex flex-wrap align-items-center justify-content-between p-6 border-bottom">
+<div id="gallery-modal-wrapper">
 
-            <div class="breadcrumbs">
-                {% for crumb in breadcrumbs %}
-                    {% if loop.last %}
-                        <span class="crumb active">
-                            {% if loop.first %}<i class="ti ti-home"></i>{% endif %}
-                            {{ crumb.name }}
-                        </span>
-                    {% else %}
-                        <a
-                                href="javascript:void(0)"
-                                class="crumb text-dark text-hover-primary"
-                                data-modal-navigate="{{ crumb.id }}"
-                        >
-                            {% if loop.first %}<i class="ti ti-home"></i>{% endif %}
-                            {{ crumb.name }}
-                        </a>
-                        <span class="crumb-separator">
-                            <i class="ti ti-chevron-right"></i>
-                        </span>
-                    {% endif %}
-                {% endfor %}
-            </div>
+    <div class="amzs-sidebar">
+        <p class="amzs-sidebar-title">THƯ MỤC</p>
 
-            <div class="toolbar-actions d-flex gap-2">
-
-                {% if currentFolderId > 0 %}
-                    {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
-                    <a
-                            href="javascript:void(0)"
-                            class="btn btn-sm btn-light-primary d-flex align-items-center gap-1"
-                            data-modal-navigate="{{ parentFolderId }}"
-                    >
-                        ← <span>Quay lại</span>
-                    </a>
-                {% endif %}
-
-                <button type="button" id="modal-btnAddFolder" class="btn btn-primary">
-                    <i class="fas fa-folder-plus"></i> Thêm thư mục
-                </button>
-
-                <button type="button" class="btn btn-sm btn-dark" id="modal-btnUploadImg">
-                    <i class="ti ti-cloud-upload"></i> Tải ảnh lên
-                </button>
-
-            </div>
-        </div>
-
-        <div class="manager-body p-6" style="min-height: 480px;">
-            <div class="gallery-grid" id="modal-galleryGrid">
-
-                {% for folder in folders %}
-                    <div class="col-folder">
-                        <div
-                                class="folder-item-card gallery-item selectable-item position-relative"
-                                data-type="folder"
-                                data-id="{{ folder.id }}"
-                        >
-                            <div class="select-badge"><i class="ti ti-check"></i></div>
-                            <i class="ti ti-folder-filled"></i>
-                            <div class="folder-card-name">{{ folder.name }}</div>
-                        </div>
-                    </div>
-                {% endfor %}
-
-                {% for img in pictures %}
-                    <div class="col-img">
-                        <div class="gallery-item selectable-item" data-type="picture" data-id="{{ img.id }}">
-                            <div class="select-badge"><i class="ti ti-check"></i></div>
-                            <img src="{{ asset(img.image) }}" alt="{{ img.name }}" loading="lazy"/>
-                            <div class="img-name">{{ img.name }}</div>
-                        </div>
-                    </div>
-                {% endfor %}
-
-                {% if folders is empty and pictures is empty %}
-                    <div class="w-100 text-center p-10 text-muted" style="padding-top: 100px !important;">
-                        Thư mục này trống rỗng.
-                    </div>
-                {% endif %}
-
-            </div>
-
-            {% if pictures.pageCount > 1 %}
-                <div class="manager-pagination d-flex justify-content-center mt-6">
-                    <nav aria-label="Media library pagination">
-                        <ul class="pagination pagination-sm mb-0 gap-1">
-
-                            {% if pictures.current > 1 %}
-                                <li class="page-item">
-                                    <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
-                                       href="javascript:void(0)"
-                                       data-modal-navigate="{{ currentFolderId }}"
-                                       data-modal-page="{{ pictures.current - 1 }}">
-                                        <i class="ti ti-chevron-left"></i>
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                        <span class="page-link rounded-2 border-0 bg-light text-muted">
-                            <i class="ti ti-chevron-left"></i>
-                        </span>
-                                </li>
-                            {% endif %}
-
-                            {% for page in 1..pictures.pageCount %}
-                                {% if page == pictures.current %}
-                                    <li class="page-item active" aria-current="page">
-                            <span class="page-link rounded-2 border-0 bg-primary text-white fw-bold">
-                                {{ page }}
-                            </span>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item">
-                                        <a class="page-link rounded-2 border-0 text-dark text-hover-primary bg-hover-light"
-                                           href="javascript:void(0)"
-                                           data-modal-navigate="{{ currentFolderId }}"
-                                           data-modal-page="{{ page }}">
-                                            {{ page }}
-                                        </a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if pictures.current < pictures.pageCount %}
-                                <li class="page-item">
-                                    <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
-                                       href="javascript:void(0)"
-                                       data-modal-navigate="{{ currentFolderId }}"
-                                       data-modal-page="{{ pictures.current + 1 }}">
-                                        <i class="ti ti-chevron-right"></i>
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                        <span class="page-link rounded-2 border-0 bg-light text-muted">
-                            <i class="ti ti-chevron-right"></i>
-                        </span>
-                                </li>
-                            {% endif %}
-
-                        </ul>
-                    </nav>
-                </div>
-            {% endif %}
-
-        </div>
-
-        <div class="manager-foot d-flex align-items-center justify-content-between p-6 border-top bg-white">
-            <span class="count-badge" id="modal-selectedCount">Đã chọn: 0 ảnh</span>
-            <div class="foot-actions d-flex gap-2">
-                <button class="btn btn-secondary btn-sm" id="modal-btnDeselectAll" disabled>Bỏ chọn tất cả</button>
-                <button class="btn btn-warning btn-sm d-none" id="modal-btnEditSelected">
-                    <i class="ti ti-edit"></i> Sửa
-                </button>
-                <button class="btn btn-light-danger btn-sm" id="modal-btnDeleteSelected" disabled>Xóa đã chọn</button>
-                <button class="btn btn-primary btn-sm" id="modal-btnConfirmSelect" disabled>
-                    Áp dụng ảnh đã chọn (<span class="count">0</span>)
-                </button>
-            </div>
-        </div>
-
+        <ul class="amzs-folder-list">
+            <li>
+                <a href="{{ path('amzs_admin_gallery_modal_route', {folderId: 0}) }}"
+                   class="amzs-folder-item {{ currentFolderId == 0 ? 'active' : '' }}"
+                   data-turbo-frame="gallery_main_content">
+                    <span><i class="bi bi-images me-2"></i>Tất cả ảnh</span>
+                </a>
+            </li>
+            {% include '@AmzsGallery/gallery/_folder_tree.html.twig' with {
+                folders: sidebarFolders,
+                currentFolderId: currentFolderId
+            } %}
+        </ul>
     </div>
-</turbo-frame>
+
+    <div class="amzs-main">
+        {% include '@AmzsGallery/gallery/_main_content.html.twig' %}
+    </div>
+
+</div>
+
+<div class="amzs-footer">
+    <div class="amzs-footer-left">
+        <span class="text-muted small" id="modal-selectedCount">Chưa chọn ảnh nào</span>
+
+        <nav aria-label="Page navigation" id="amzs-pagination-wrapper">
+        </nav>
+    </div>
+
+    <div class="amzs-footer-right">
+        <button class="btn btn-outline-secondary btn-sm px-3" id="modal-btnDeselectAll" disabled>Bỏ chọn</button>
+        <button class="btn btn-warning btn-sm px-3 d-none" id="modal-btnEditSelected">Sửa</button>
+        <button class="btn btn-warning btn-sm px-3 d-none" id="modal-btnCropSelected">Cắt ảnh</button>
+        <button class="btn btn-danger btn-sm px-3" id="modal-btnDeleteSelected" disabled>Xóa</button>
+        <button class="btn btn-outline-secondary btn-sm px-3" id="modal-btnUploadImg">Tải lên</button>
+        <button class="btn btn-outline-secondary btn-sm px-3" id="modal-btnAddFolder">
+            <i class="bi bi-folder-plus me-1"></i>Thư mục
+        </button>
+        <button class="btn btn-primary btn-sm px-4" id="modal-btnConfirmSelect" disabled>
+            Chèn ảnh (<span class="count">0</span>)
+        </button>
+    </div>
+</div>

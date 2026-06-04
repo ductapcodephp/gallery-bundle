@@ -1,0 +1,25 @@
+<ul class="amzs-nested">
+    {% for folder in folders %}
+        <li>
+            <a href="{{ path('amzs_admin_gallery_modal_route', {folderId: folder.id}) }}"
+               class="amzs-folder-item {{ currentFolderId == folder.id ? 'active' : '' }}"
+               data-turbo-frame="gallery_main_content">
+                <span>
+                    {% if currentFolderId == folder.id %}
+                        <i class="bi bi-folder2-open me-1 text-primary"></i>
+                    {% else %}
+                        <i class="bi bi-folder me-1 text-warning"></i>
+                    {% endif %}
+                    {{ folder.name }}
+                </span>
+            </a>
+
+            {% if folder.children|length > 0 %}
+                {% include '@AmzsGallery/gallery/_folder_tree.html.twig' with {
+                    folders: folder.children,
+                    currentFolderId: currentFolderId
+                } %}
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>

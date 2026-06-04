@@ -4,6 +4,7 @@ namespace AmzsCMS\GalleryBundle\Controller;
 use AmzsCMS\GalleryBundle\Constant\GalleryRoute;
 use AmzsCMS\GalleryBundle\Entity\Gallery;
 use AmzsCMS\GalleryBundle\Entity\GalleryPictures;
+use AmzsCMS\GalleryBundle\Entity\Picture;
 use AmzsCMS\GalleryBundle\Form\GalleryPicturesType;
 use AmzsCMS\GalleryBundle\Form\ManageGalleryFormType;
 use AmzsCMS\GalleryBundle\Repository\GalleryRepository;
@@ -16,6 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Vich\UploaderBundle\Storage\StorageInterface;
 
 class GalleryController extends AbstractController
 {
@@ -30,14 +32,29 @@ class GalleryController extends AbstractController
 
         $currentFolder = ($folderId > 0) ? $galleryService->find($folderId) : null;
 
-        return $this->render('@AmzsGallery/gallery/index.html.twig', [
-            'folders'         => $galleryService->getFolders($currentFolder),
-            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 21),
+        if ($page === 1) {
+            $folders = $galleryService->getFolders($currentFolder);
+        } else {
+            $folders = [];
+        }
+
+        $folderCount = count($folders);
+        $pictureLimit = max(5, 20 - $folderCount);
+
+        $data = [
+            'folders'         => $folders,
+            'sidebarFolders'  => $galleryService->getSidebarFolders(),
+            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, $pictureLimit),
             'breadcrumbs'     => $galleryService->getBreadcrumbs($currentFolder),
             'currentFolderId' => $folderId
-        ]);
-    }
+        ];
 
+        if ($request->headers->get('Turbo-Frame') === 'media_library_spa') {
+            return $this->render('@AmzsGallery/gallery/_content.html.twig', $data);
+        }
+
+        return $this->render('@AmzsGallery/gallery/index.html.twig', $data);
+    }
 
     public function delete(int $id, GalleryService $galleryService, EntityManagerInterface $manager): JsonResponse
     {
@@ -160,19 +177,98 @@ class GalleryController extends AbstractController
 
         $currentFolder = ($folderId > 0) ? $galleryService->find($folderId) : null;
 
+        if ($page === 1) {
+            $folders = $galleryService->getFolders($currentFolder);
+        } else {
+            $folders = [];
+        }
+
+        $folderCount = count($folders);
+
+        $pictureLimit = max(0, 15 - $folderCount);
+
+        $pictures = $galleryPictureService->getPaginatedPictures($currentFolder, $page, $pictureLimit);
+
         $data = [
-            'folders'         => $galleryService->getFolders($currentFolder),
-            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, 21),
+            'folders'         => $folders,
+            'sidebarFolders'  => $galleryService->getSidebarFolders(),
+            'pictures'        => $pictures,
             'breadcrumbs'     => $galleryService->getBreadcrumbs($currentFolder),
             'currentFolderId' => $folderId,
             'isModal'         => true,
         ];
+
+        if ($request->headers->get('Turbo-Frame') === 'gallery_main_content') {
+            return $this->render('@AmzsGallery/gallery/_main_content.html.twig', $data);
+        }
 
         if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
             return $this->render('@AmzsGallery/gallery/_content_modal.html.twig', $data);
         }
 
         return $this->render('@AmzsGallery/gallery/modal.html.twig', $data);
+    }
+    public function upload(
+        Request $request,
+        EntityManagerInterface $em,
+        StorageInterface $storage
+    ): Response {
+        $uploadedFile = $request->files->get('file');
+
+        if (!$uploadedFile) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Không tìm thấy file nào được chọn.'
+            ], 400);
+        }
+
+        $folderId = (int) $request->request->get('folderId');
+        $gallery = null;
+
+        if ($folderId > 0) {
+            $gallery = $em->getRepository(Gallery::class)->find($folderId);
+        }
+        $picture = new Picture();
+        if ($gallery) {
+            $picture->setGallery($gallery);
+        }
+        $picture->setFile($uploadedFile);
+
+        try {
+            $em->persist($picture);
+            $em->flush();
+
+            $galleryPicture = new GalleryPictures();
+            $galleryPicture->setPicture($picture);
+
+            if ($gallery) {
+                $galleryPicture->setGallery($gallery);
+            }
+
+            $imagePath = $storage->resolveUri($picture, 'file');
+
+            if (method_exists($galleryPicture, 'setImage')) {
+                $galleryPicture->setImage($imagePath);
+            }
+
+            $em->persist($galleryPicture);
+            $em->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Tải ảnh và lưu vào thư viện thành công!',
+                'id' => $picture->getId(),
+                'gallery_picture_id' => $galleryPicture->getId(),
+                'image_path' => $imagePath,
+                'fileName' => $picture->getFileName(),
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
 }

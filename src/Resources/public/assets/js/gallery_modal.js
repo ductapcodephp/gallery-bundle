@@ -1,9 +1,8 @@
-
-
 (function () {
     "use strict";
 
-    var MODAL_URL = Routing.generate('amzs_admin_gallery_modal_route');
+    // BƯỚC 1: Đổi từ khai báo cố định sang biến không gán giá trị trước
+    var MODAL_URL = "";
 
     var MODAL_ID  = "amzsGalleryPickerModal";
     var BODY_ID   = "amzsGalleryPickerBody";
@@ -15,6 +14,7 @@
 
     var _style = document.createElement("style");
     _style.textContent = [
+        "#" + MODAL_ID + " { z-index: 99999 !important; }",
         "#" + BODY_ID + " { transition: opacity 0.15s ease; }",
         "#" + BODY_ID + ".amzs-fading { opacity: 0; pointer-events: none; }",
         "#" + BODY_ID + " .amzs-overlay {",
@@ -28,7 +28,6 @@
     ].join("\n");
     document.head.appendChild(_style);
 
-    //lắng nghe nút đặt data-amzs-gallery-modal attribute để mở modal
     document.addEventListener("click", function (e) {
         if (e.target.closest("#" + MODAL_ID)) return;
 
@@ -39,8 +38,18 @@
         _open();
     });
 
+    document.addEventListener("amzsGalleryOpen", function () {
+        _trigger = null;
+        _open();
+    });
+
     function _open() {
+        if (!MODAL_URL && typeof Routing !== "undefined") {
+            MODAL_URL = Routing.generate('amzs_admin_gallery_modal_route');
+        }
+
         _ensureShell();
+        document.body.appendChild(_modalEl);
         _load(0);
         _modalInst.show();
     }
@@ -59,6 +68,7 @@
         _modalEl.setAttribute("class", "modal fade");
         _modalEl.setAttribute("tabindex", "-1");
         _modalEl.setAttribute("data-amzs-gallery-modal-container", "true");
+        _modalEl.style.zIndex = "99999";
 
         var dialog  = document.createElement("div");
         dialog.setAttribute("class", "modal-dialog modal-xl modal-dialog-centered amzs-modal-xl-custom");
@@ -85,7 +95,8 @@
         _modalEl.appendChild(dialog);
         document.body.appendChild(_modalEl);
 
-        _modalInst = new bootstrap.Modal(_modalEl, { backdrop: "static" });
+        // backdrop: false — không tạo backdrop đè lên CKEditor dialog
+        _modalInst = new bootstrap.Modal(_modalEl, { backdrop: false, keyboard: false });
         _modalEl.addEventListener("hidden.bs.modal", _onHidden);
     }
 
@@ -109,7 +120,9 @@
             }
         }
 
-        fetch(MODAL_URL + "?folderId=" + folderId + "&page" + page, {
+        var requestUrl = MODAL_URL || (typeof Routing !== "undefined" ? Routing.generate('amzs_admin_gallery_modal_route') : "");
+
+        fetch(requestUrl + "?folderId=" + folderId + "&page" + page, {
             headers: { "X-Requested-With": "XMLHttpRequest" }
         })
             .then(function (r) {
@@ -147,7 +160,7 @@
         c.removeEventListener("dblclick", _onDblClick);
     }
 
-    //xử lý sự kiện click
+    // xử lý sự kiện click
     function _onClick(e) {
         var pageLink = e.target.closest("[data-modal-page]");
         if (pageLink) {
@@ -420,4 +433,3 @@
     }
 
 }());
-

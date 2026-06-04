@@ -1,269 +1,175 @@
-<turbo-frame
-        id="media_library_spa"
-        data-current-folder="{{ currentFolderId }}"
->
+<turbo-frame id="media_library_spa" data-current-folder="{{ currentFolderId }}">
 
-    <div class="media-manager-wrapper card shadow-sm">
+    {% if sidebarFolders is defined %}
+        <turbo-stream action="update" target="gallery-sidebar-tree-wrapper">
+            <template>
+                {% include '@AmzsGallery/gallery/_folder_tree_index.html.twig' with {
+                    folders: sidebarFolders,
+                    currentFolderId: currentFolderId
+                } %}
+            </template>
+        </turbo-stream>
+    {% endif %}
 
-        <div class="manager-toolbar d-flex flex-wrap align-items-center justify-content-between p-6 border-bottom">
+    <div class="manager-toolbar p-5 border-bottom bg-white d-flex align-items-center justify-content-between flex-wrap gap-4">
 
-            <div class="breadcrumbs">
-
-                {% for crumb in breadcrumbs %}
-
-                    {% if loop.last %}
-
-                        <span class="crumb active">
-                            {% if loop.first %}
-                                <i class="ti ti-home"></i>
-                            {% endif %}
-
-                            {{ crumb.name }}
-                        </span>
-
-                    {% else %}
-
-                        <a
-                                href="{{ path('amzs_admin_gallery_index_route', {
-                                    folderId: crumb.id
-                                }) }}"
-                                data-turbo-prefetch="false"
-                                data-turbo-action="advance"
-
-                                class="crumb text-dark text-hover-primary"
-                        >
-                            {% if loop.first %}
-                                <i class="ti ti-home"></i>
-                            {% endif %}
-
-                            {{ crumb.name }}
-                        </a>
-
-                        <span class="crumb-separator">
-                            <i class="ti ti-chevron-right"></i>
-                        </span>
-
-                    {% endif %}
-
-                {% endfor %}
-
-            </div>
-
-            <div class="toolbar-actions d-flex gap-2">
-
-                {% set galleryRouteClass = 'AmzsCMS\\GalleryBundle\\Constant\\GalleryRoute' %}
-
-                {% if currentFolderId > 0 %}
-
-                    {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
-
-                    <a
-                            href="{{ path('amzs_admin_gallery_index_route', {
-                                folderId: parentFolderId
-                            }) }}"
-                            data-turbo-action="advance"
-                            data-turbo-prefetch="false"
-                            class="btn btn-sm btn-light-primary d-flex align-items-center gap-1"
-                    >
-                        ←
-
-                        <span>
-                Quay lại
-            </span>
+        <div class="amzs-breadcrumb d-flex align-items-center gap-1">
+            {% for crumb in breadcrumbs %}
+                {% if loop.last %}
+                    <span class="crumb active fw-bold text-dark">
+                        {% if loop.first %}<i class="ti ti-home me-1"></i>{% endif %}
+                        {{ crumb.name }}
+                    </span>
+                {% else %}
+                    <a href="{{ path('amzs_admin_gallery_index_route', { folderId: crumb.id }) }}"
+                       data-turbo-prefetch="false"
+                       data-turbo-action="advance"
+                       class="crumb text-muted text-hover-primary">
+                        {% if loop.first %}<i class="ti ti-home me-1"></i>{% endif %}
+                        {{ crumb.name }}
                     </a>
-
+                    <span class="crumb-separator text-muted px-1"><i class="ti ti-chevron-right" style="font-size: 0.75rem;"></i></span>
                 {% endif %}
-
-                <button
-                        type="button"
-                        id="btnAddFolder"
-                        class="btn btn-primary"
-                >
-                    <i class="fas fa-folder-plus"></i>
-
-                    Thêm thư mục
-                </button>
-
-                <button
-                        class="btn btn-sm btn-dark"
-                        id="btnUploadImg"
-                >
-                    <i class="ti ti-cloud-upload"></i>
-
-                    Tải ảnh lên
-                </button>
-
-            </div>
-
+            {% endfor %}
         </div>
 
-        <div class="manager-body p-6" style="min-height: 480px;">
-
-            <div class="gallery-grid" id="galleryGrid">
-
-                {% for folder in folders %}
-
-                    <div class="col-folder">
-
-                        <div
-                                class="folder-item-card gallery-item selectable-item position-relative"
-                                data-type="folder"
-                                data-id="{{ folder.id }}"
-                                data-url="{{ path('amzs_admin_gallery_index_route', { folderId: folder.id }) }}"
-                        >
-                            <div class="select-badge">
-                                <i class="ti ti-check"></i>
-                            </div>
-
-                            <i class="ti ti-folder-filled"></i>
-
-                            <div class="folder-card-name">
-                                {{ folder.name }}
-                            </div>
-                        </div>
-
-                    </div>
-
-                {% endfor %}
-
-                {% for img in pictures %}
-
-                    <div class="col-img" data-type="picture" data-id="{{ img.id }}">
-
-                        <div class="gallery-item selectable-item" data-type="picture"  data-id="{{ img.id }}">
-
-                            <div class="select-badge">
-                                <i class="ti ti-check"></i>
-                            </div>
-
-                            <img
-                                    src="{{ asset( img.image ) }}"
-                                    alt="{{ img.name }}"
-                                    loading="lazy"
-                            />
-
-                            <div class="img-name">
-                                {{ img.name }}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                {% endfor %}
-
-                {% if folders is empty and pictures is empty %}
-
-                    <div class="w-100 text-center p-10 text-muted" style="padding-top: 100px !important;">
-                        Thư mục này trống rỗng.
-                    </div>
-
-                {% endif %}
-
-            </div>
-            {% if pictures.pageCount > 1 %}
-                <div class="manager-pagination d-flex justify-content-center mt-6">
-                    <nav aria-label="Media library pagination">
-                        <ul class="pagination pagination-sm mb-0 gap-1">
-
-                            {% if pictures.current > 1 %}
-                                <li class="page-item">
-                                    <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
-                                       href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current - 1}) }}"
-                                       data-turbo-action="advance"
-                                       data-turbo-prefetch="false"
-                                       aria-label="Previous">
-                                        <i class="ti ti-chevron-left"></i>
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                        <span class="page-link rounded-2 border-0 bg-light text-muted">
-                            <i class="ti ti-chevron-left"></i>
-                        </span>
-                                </li>
-                            {% endif %}
-
-                            {% for page in 1..pictures.pageCount %}
-                                {% if page == pictures.current %}
-                                    <li class="page-item active" aria-current="page">
-                            <span class="page-link rounded-2 border-0 bg-primary text-white fw-bold">
-                                {{ page }}
-                            </span>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item">
-                                        <a class="page-link rounded-2 border-0 text-dark text-hover-primary bg-hover-light"
-                                           href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': page}) }}"
-                                           data-turbo-action="advance"
-                                           data-turbo-prefetch="false">
-                                            {{ page }}
-                                        </a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if pictures.current < pictures.pageCount %}
-                                <li class="page-item">
-                                    <a class="page-link rounded-2 border-0 bg-light-primary text-primary"
-                                       href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current + 1}) }}"
-                                       data-turbo-action="advance"
-                                       data-turbo-prefetch="false"
-                                       aria-label="Next">
-                                        <i class="ti ti-chevron-right"></i>
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                        <span class="page-link rounded-2 border-0 bg-light text-muted">
-                            <i class="ti ti-chevron-right"></i>
-                        </span>
-                                </li>
-                            {% endif %}
-
-                        </ul>
-                    </nav>
-                </div>
+        <div class="toolbar-actions d-flex gap-2">
+            {% if currentFolderId > 0 %}
+                {% set parentFolderId = breadcrumbs[breadcrumbs|length - 2].id|default(0) %}
+                <a href="{{ path('amzs_admin_gallery_index_route', { folderId: parentFolderId }) }}"
+                   data-turbo-action="advance"
+                   data-turbo-prefetch="false"
+                   class="btn btn-sm btn-light d-flex align-items-center gap-1">
+                    <i class="ti ti-arrow-left"></i> Quay lại
+                </a>
             {% endif %}
+
+            <button type="button" id="btnAddFolder" class="btn btn-sm btn-outline-primary">
+                <i class="ti ti-folder-plus me-1"></i> Thêm thư mục
+            </button>
+
+            <button class="btn btn-sm btn-primary" id="btnUploadImg">
+                <i class="ti ti-cloud-upload me-1"></i> Tải ảnh lên
+            </button>
         </div>
-
-        <div class="manager-foot d-flex align-items-center justify-content-between p-6 border-top bg-white">
-
-            <span
-                    class="count-badge"
-                    id="selectedCount"
-            >
-                Đã chọn: 0 ảnh
-            </span>
-
-            <div class="foot-actions d-flex gap-2">
-
-                <button
-                        class="btn btn-secondary btn-sm"
-                        id="btnDeselectAll"
-                        disabled
-                >
-                    Bỏ chọn tất cả
-                </button>
-
-                <button
-                        class="btn btn-warning btn-sm d-none"
-                        id="btnEditSelected"
-                >
-                    <i class="ti ti-edit"></i> Sửa
-                </button>
-                <button
-                        class="btn btn-light-danger btn-sm"
-                        id="btnDeleteSelected"
-                        disabled
-                >
-                    Xóa ảnh đã chọn
-                </button>
-
-            </div>
-
-        </div>
-
     </div>
 
+    <div class="manager-body p-6">
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-4" id="galleryGrid">
+
+            {% for folder in folders %}
+                <div class="col">
+                    <div class="folder-item-card gallery-item selectable-item position-relative border rounded p-4 text-center cursor-pointer bg-hover-light transition-3s"
+                         data-type="folder"
+                         data-id="{{ folder.id }}"
+                         data-url="{{ path('amzs_admin_gallery_index_route', { folderId: folder.id }) }}">
+
+                        <div class="select-badge position-absolute top-0 end-0 m-2 d-none">
+                            <span class="badge bg-primary p-1"><i class="ti ti-check text-white"></i></span>
+                        </div>
+
+                        <div class="mb-2">
+                            <i class="ti ti-folder text-warning" style="font-size: 3rem;"></i>
+                        </div>
+
+                        <div class="folder-card-name text-dark text-truncate fw-semibold px-2" title="{{ folder.name }}">
+                            {{ folder.name }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% for img in pictures %}
+                <div class="col" data-type="picture" data-id="{{ img.id }}">
+                    <div class="gallery-item selectable-item position-relative border rounded p-2 text-center h-100 bg-hover-light cursor-pointer transition-3s"
+                         data-type="picture"
+                         data-id="{{ img.id }}">
+
+                        <div class="select-badge position-absolute top-0 end-0 m-2 d-none">
+                            <span class="badge bg-primary p-1"><i class="ti ti-check text-white"></i></span>
+                        </div>
+
+                        <div class="img-ratio-box overflow-hidden rounded mb-2 d-flex align-items-center justify-content-center bg-light" style="height: 120px;">
+                            <img src="{{ asset(img.image) }}"
+                                 alt="{{ img.name }}"
+                                 loading="lazy"
+                                 class="img-fluid max-h-100 obj-fit-contain" />
+                        </div>
+
+                        <div class="img-name text-muted small text-truncate px-1" title="{{ img.name }}">
+                            {{ img.name }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if folders is empty and pictures is empty %}
+                <div class="col-100 w-100 text-center py-10 text-muted my-10">
+                    <div class="mb-3"><i class="ti ti-image-off fs-1 text-muted"></i></div>
+                    Thư mục này trống rỗng.
+                </div>
+            {% endif %}
+
+        </div>
+
+         {% if pictures.pageCount > 1 %}
+            <div class="manager-pagination d-flex justify-content-center mt-8">
+                <nav aria-label="Media library pagination">
+                    <ul class="pagination pagination-sm mb-0 gap-1">
+
+                        {% if pictures.current > 1 %}
+                            <li class="page-item">
+                                <a class="page-link rounded border-0 bg-light-primary text-primary"
+                                   href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current - 1}) }}"
+                                   data-turbo-action="advance"
+                                   data-turbo-prefetch="false"
+                                   aria-label="Previous">
+                                    <i class="ti ti-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link rounded border-0 bg-light text-muted"><i class="ti ti-chevron-left"></i></span>
+                            </li>
+                        {% endif %}
+
+                        {% for page in 1..pictures.pageCount %}
+                            {% if page == pictures.current %}
+                                <li class="page-item active" aria-current="page">
+                                    <span class="page-link rounded border-0 bg-primary text-white fw-bold">{{ page }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link rounded border-0 text-dark text-hover-primary bg-hover-light"
+                                       href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': page}) }}"
+                                       data-turbo-action="advance"
+                                       data-turbo-prefetch="false">
+                                        {{ page }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if pictures.current < pictures.pageCount %}
+                            <li class="page-item">
+                                <a class="page-link rounded border-0 bg-light-primary text-primary"
+                                   href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current + 1}) }}"
+                                   data-turbo-action="advance"
+                                   data-turbo-prefetch="false"
+                                   aria-label="Next">
+                                    <i class="ti ti-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link rounded border-0 bg-light text-muted"><i class="ti ti-chevron-right"></i></span>
+                            </li>
+                        {% endif %}
+
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+    <input type="file" multiple accept="image/*" id="spaHiddenFileInput" style="display: none;" />
 </turbo-frame>

@@ -2,68 +2,15 @@
 
 namespace AmzsCMS\GalleryBundle\Repository;
 
-
 use AmzsCMS\GalleryBundle\Entity\Gallery;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
+use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
 
-/**
- * @extends ServiceEntityRepository<Gallery>
- */
-class GalleryRepository extends ServiceEntityRepository
+class GalleryRepository extends NestedTreeRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(EntityManagerInterface $em)
     {
-        parent::__construct($registry, Gallery::class);
-    }
-
-    public function getAllGalleriesRoot()
-    {
-        return $this->createQueryBuilder('g')
-            ->where('g.parent IS NULL')
-            ->andWhere('g.type = :type')
-            ->setParameter('type','folder')
-            ->getQuery()
-            ->getResult();
-    }
-
-    //    /**
-    //     * @return User[] Returns an array of User objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('u.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?User
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
-
-    // lay danh sach gallery voi type la post (default val cms)
-    public function getPaginated(?string $keyword, $type, $filters = []): \Doctrine\ORM\QueryBuilder
-    {
-        $qb = $this->createQueryBuilder('gallery');
-        $qb->where('gallery.type = :type');
-        $qb->setParameter('type', $type);
-
-        if(!empty($keyword)) {
-            $qb->andWhere('gallery.name LIKE :keyword');
-            $qb->setParameter('keyword', '%'.$keyword.'%');
-        }
-
-        return $qb;
+        $classMetadata = $em->getClassMetadata(Gallery::class);
+        parent::__construct($em, $classMetadata);
     }
 }

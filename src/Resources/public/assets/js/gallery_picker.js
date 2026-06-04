@@ -88,7 +88,7 @@
             var el = all[i];
             if (el.tagName === "INPUT" || el.tagName === "BUTTON" || el.tagName === "A") continue;
             if (el.style.backgroundImage) return el;
-        }1
+        }
         return container.querySelector("img") || null;
     }
 

@@ -19,30 +19,29 @@ class GalleryService
         return $this->galleryRepository->find($id);
     }
 
+    public function getSidebarFolders()
+    {
+        return $this->galleryRepository->getRootNodes('name', 'asc');
+    }
+
     public function getFolders(?Gallery $currentFolder)
     {
         if ($currentFolder === null) {
-            return $this->galleryRepository->getAllGalleriesRoot();
+            return $this->galleryRepository->findBy(['parent' => null], ['name' => 'ASC']);
         }
 
-        return $currentFolder->getChildren();
+        return $this->galleryRepository->getChildren($currentFolder, true, 'name', 'asc');
     }
-
 
     public function getBreadcrumbs(?Gallery $currentFolder): array
     {
-        $breadcrumbs = [['id' => 0, 'name' => 'Thư mục gốc']];
-
+        $breadcrumbs = [];
         if ($currentFolder !== null) {
-            $node = $currentFolder;
-            $pathNodes = [];
-            while ($node !== null) {
-                array_unshift($pathNodes, ['id' => $node->getId(), 'name' => $node->getName()]);
-                $node = $node->getParent();
+            $nodes = $this->galleryRepository->getPath($currentFolder);
+            foreach ($nodes as $node) {
+                $breadcrumbs[] = ['id' => $node->getId(), 'name' => $node->getName()];
             }
-            $breadcrumbs = array_merge($breadcrumbs, $pathNodes);
         }
-
         return $breadcrumbs;
     }
 }

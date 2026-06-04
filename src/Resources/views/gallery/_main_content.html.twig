@@ -1,0 +1,96 @@
+<turbo-frame id="gallery_main_content" data-current-folder="{{ currentFolderId }}">
+
+    {# TOOLBAR #}
+    <div class="amzs-toolbar">
+        <div class="input-group">
+            <span class="input-group-text border-end-0 bg-white text-muted">
+                <i class="bi bi-search" style="font-size:0.85rem;"></i>
+            </span>
+            <input type="text"
+                   class="form-control border-start-0 ps-0"
+                   placeholder="Tìm kiếm ảnh..."
+                   style="font-size:0.875rem;">
+        </div>
+        <select class="form-select" style="width:auto;min-width:110px;font-size:0.875rem;">
+            <option>Tên A–Z</option>
+            <option>Tên Z–A</option>
+            <option>Mới nhất</option>
+        </select>
+    </div>
+
+    <div class="amzs-breadcrumb">
+        {% if breadcrumbs|length == 0 %}
+            <span class="amzs-breadcrumb-current">Thư viện</span>
+        {% else %}
+            <a href="{{ path('amzs_admin_gallery_modal_route', {folderId: 0}) }}"
+               data-turbo-frame="gallery_main_content">Thư viện</a>
+
+            {% for crumb in breadcrumbs %}
+                <span class="amzs-breadcrumb-sep">/</span>
+                {% if loop.last %}
+                    <span class="amzs-breadcrumb-current">{{ crumb.name }}</span>
+                {% else %}
+                    <a href="{{ path('amzs_admin_gallery_modal_route', {folderId: crumb.id}) }}"
+                       data-turbo-frame="gallery_main_content">{{ crumb.name }}</a>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="amzs-grid-container">
+
+        {% if folders is empty and pictures is empty %}
+            <div class="amzs-empty">
+                <i class="bi bi-image" style="font-size:2.5rem;"></i>
+                <span>Thư mục này chưa có dữ liệu</span>
+            </div>
+        {% else %}
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+
+                {% for folder in folders %}
+                    <div class="col">
+                        <div class="amzs-image-card gallery-item"
+                             data-type="folder"
+                             data-id="{{ folder.id }}">
+                            <div class="amzs-thumb">
+                                <div class="amzs-thumb-placeholder">
+                                    <i class="bi bi-folder-fill text-warning" style="font-size:2.5rem;"></i>
+                                </div>
+                            </div>
+                            <div class="amzs-card-info">
+                                <p class="amzs-card-name">{{ folder.name }}</p>
+                                <p class="amzs-card-meta">Thư mục</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% for img in pictures %}
+                    <div class="col">
+                        <div class="amzs-image-card gallery-item"
+                             data-type="picture"
+                             data-id="{{ img.id }}">
+                            <div class="amzs-thumb">
+                                <img src="{{ asset(img.image) }}"
+                                     alt="{{ img.name }}"
+                                     loading="lazy">
+                            </div>
+                            <div class="amzs-card-info">
+                                <p class="amzs-card-name img-name">{{ img.name }}</p>
+                                <p class="amzs-card-meta">Hình ảnh</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+            </div>
+        {% endif %}
+
+    </div>
+    {% if pictures.pageCount is defined and pictures.pageCount > 1 %}
+        <div class="d-none" id="amzs-pagination-data">
+            {{ knp_pagination_render(pictures) }}
+        </div>
+    {% endif %}
+
+</turbo-frame>

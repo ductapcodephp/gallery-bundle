@@ -42,7 +42,7 @@ amzs_admin_gallery_delete_picture_route:
 
 amzs_admin_gallery_upload_route:
   path: /upload
-  controller: AmzsCMS\GalleryBundle\Controller\MediaLibraryController::upload
+  controller: AmzsCMS\GalleryBundle\Controller\GalleryController::upload
   methods: [POST, GET]
   options:
     expose: true
