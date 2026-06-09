@@ -21,38 +21,37 @@ use Vich\UploaderBundle\Storage\StorageInterface;
 class GalleryController extends AbstractController
 {
 
-    private function prepareGalleryData(
-        Request $request,
-        GalleryService $galleryService,
-        GalleryPictureService $galleryPictureService,
-        int $baseLimit,
-        int $minLimit
-    ): array {
+    private function prepareGalleryData(Request $request, GalleryService $galleryService, GalleryPictureService $galleryPictureService, int $pictureLimit = 15): array
+    {
         $folderId = $request->query->getInt('folderId', 0);
         $page     = $request->query->getInt('page', 1);
 
-        $currentFolder = ($folderId > 0) ? $galleryService->find($folderId) : null;
+        $currentFolder = ($folderId > 0)
+            ? $galleryService->find($folderId)
+            : null;
 
-        $folders = ($page === 1) ? $galleryService->getFolders($currentFolder) : [];
-        $folderCount = count($folders);
-
-        $pictureLimit = max($minLimit, $baseLimit - $folderCount);
+        $folders = ($page === 1)
+            ? $galleryService->getFolders($currentFolder)
+            : [];
 
         return [
             'folders'         => $folders,
             'sidebarFolders'  => $galleryService->getSidebarFolders(),
-            'pictures'        => $galleryPictureService->getPaginatedPictures($currentFolder, $page, $pictureLimit),
+            'pictures'        => $galleryPictureService->getPaginatedPictures(
+                $currentFolder,
+                $page,
+                $pictureLimit
+            ),
             'breadcrumbs'     => $galleryService->getBreadcrumbs($currentFolder),
             'currentFolderId' => $folderId
         ];
     }
-
     public function index(
         Request $request,
         GalleryService $galleryService,
         GalleryPictureService $galleryPictureService
     ): Response {
-        $data = $this->prepareGalleryData($request, $galleryService, $galleryPictureService, 20, 5);
+        $data = $this->prepareGalleryData($request, $galleryService, $galleryPictureService,15);
 
         if ($request->headers->get('Turbo-Frame') === 'media_library_spa') {
             return $this->render('@AmzsGallery/gallery/_content.html.twig', $data);
@@ -66,7 +65,7 @@ class GalleryController extends AbstractController
         GalleryService $galleryService,
         GalleryPictureService $galleryPictureService
     ): Response {
-        $data = $this->prepareGalleryData($request, $galleryService, $galleryPictureService, 15, 0);
+        $data = $this->prepareGalleryData($request, $galleryService, $galleryPictureService,10  );
         $data['isModal'] = true;
 
         if ($request->headers->get('Turbo-Frame') === 'gallery_main_content') {

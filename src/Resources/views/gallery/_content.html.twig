@@ -57,27 +57,6 @@
     <div class="manager-body p-6">
         <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-4" id="galleryGrid">
 
-            {% for folder in folders %}
-                <div class="col">
-                    <div class="folder-item-card gallery-item selectable-item position-relative border rounded p-4 text-center cursor-pointer bg-hover-light transition-3s"
-                         data-type="folder"
-                         data-id="{{ folder.id }}"
-                         data-url="{{ path('amzs_admin_gallery_index_route', { folderId: folder.id }) }}">
-
-                        <div class="select-badge position-absolute top-0 end-0 m-2 d-none">
-                            <span class="badge bg-primary p-1"><i class="ti ti-check text-white"></i></span>
-                        </div>
-
-                        <div class="mb-2">
-                            <i class="ti ti-folder text-warning" style="font-size: 3rem;"></i>
-                        </div>
-
-                        <div class="folder-card-name text-dark text-truncate fw-semibold px-2" title="{{ folder.name }}">
-                            {{ folder.name }}
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
 
             {% for img in pictures %}
                 <div class="col" data-type="picture" data-id="{{ img.id }}">
@@ -112,64 +91,10 @@
 
         </div>
 
-         {% if pictures.pageCount > 1 %}
-            <div class="manager-pagination d-flex justify-content-center mt-8">
-                <nav aria-label="Media library pagination">
-                    <ul class="pagination pagination-sm mb-0 gap-1">
+        <div class="navigation">
+            {{ knp_pagination_render(pictures) }}
+        </div>
 
-                        {% if pictures.current > 1 %}
-                            <li class="page-item">
-                                <a class="page-link rounded border-0 bg-light-primary text-primary"
-                                   href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current - 1}) }}"
-                                   data-turbo-action="advance"
-                                   data-turbo-prefetch="false"
-                                   aria-label="Previous">
-                                    <i class="ti ti-chevron-left"></i>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link rounded border-0 bg-light text-muted"><i class="ti ti-chevron-left"></i></span>
-                            </li>
-                        {% endif %}
-
-                        {% for page in 1..pictures.pageCount %}
-                            {% if page == pictures.current %}
-                                <li class="page-item active" aria-current="page">
-                                    <span class="page-link rounded border-0 bg-primary text-white fw-bold">{{ page }}</span>
-                                </li>
-                            {% else %}
-                                <li class="page-item">
-                                    <a class="page-link rounded border-0 text-dark text-hover-primary bg-hover-light"
-                                       href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': page}) }}"
-                                       data-turbo-action="advance"
-                                       data-turbo-prefetch="false">
-                                        {{ page }}
-                                    </a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if pictures.current < pictures.pageCount %}
-                            <li class="page-item">
-                                <a class="page-link rounded border-0 bg-light-primary text-primary"
-                                   href="{{ path('amzs_admin_gallery_index_route', {'folderId': currentFolderId, 'page': pictures.current + 1}) }}"
-                                   data-turbo-action="advance"
-                                   data-turbo-prefetch="false"
-                                   aria-label="Next">
-                                    <i class="ti ti-chevron-right"></i>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link rounded border-0 bg-light text-muted"><i class="ti ti-chevron-right"></i></span>
-                            </li>
-                        {% endif %}
-
-                    </ul>
-                </nav>
-            </div>
-        {% endif %}
     </div>
     <input type="file" multiple accept="image/*" id="spaHiddenFileInput" style="display: none;" />
 </turbo-frame>

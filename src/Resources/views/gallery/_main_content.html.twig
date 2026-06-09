@@ -45,24 +45,6 @@
         {% else %}
             <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
 
-                {% for folder in folders %}
-                    <div class="col">
-                        <div class="amzs-image-card gallery-item"
-                             data-type="folder"
-                             data-id="{{ folder.id }}">
-                            <div class="amzs-thumb">
-                                <div class="amzs-thumb-placeholder">
-                                    <i class="bi bi-folder-fill text-warning" style="font-size:2.5rem;"></i>
-                                </div>
-                            </div>
-                            <div class="amzs-card-info">
-                                <p class="amzs-card-name">{{ folder.name }}</p>
-                                <p class="amzs-card-meta">Thư mục</p>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-
                 {% for img in pictures %}
                     <div class="col">
                         <div class="amzs-image-card gallery-item"
@@ -85,10 +67,8 @@
         {% endif %}
 
     </div>
-    {% if pictures.pageCount is defined and pictures.pageCount > 1 %}
-        <div class="d-none" id="amzs-pagination-data">
-            {{ knp_pagination_render(pictures) }}
-        </div>
-    {% endif %}
+    <div class="navigation">
+        {{ knp_pagination_render(pictures) }}
+    </div>
 
 </turbo-frame>
