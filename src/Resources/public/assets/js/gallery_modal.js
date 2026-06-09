@@ -68,7 +68,7 @@
         _modalEl.setAttribute("class", "modal fade");
         _modalEl.setAttribute("tabindex", "-1");
         _modalEl.setAttribute("data-amzs-gallery-modal-container", "true");
-        _modalEl.style.zIndex = "99999";
+        _modalEl.style.zIndex = "999";
 
         var dialog  = document.createElement("div");
         dialog.setAttribute("class", "modal-dialog modal-xl modal-dialog-centered amzs-modal-xl-custom");
