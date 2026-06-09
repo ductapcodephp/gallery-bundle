@@ -455,10 +455,10 @@
 
     function _getFolderId() {
         var body  = document.getElementById(BODY_ID);
-        var frame = body ? body.querySelector("turbo-frame#media_library_modal_spa") : null;
+        var frame = body ? body.querySelector("turbo-frame#gallery_main_content") : null;
+
         return (frame && frame.dataset.currentFolder !== undefined) ? frame.dataset.currentFolder : 0;
     }
-
     function _onHidden() {
         _unbind(document.getElementById(BODY_ID));
         _trigger = null;

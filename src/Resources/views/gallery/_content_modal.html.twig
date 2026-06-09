@@ -1,4 +1,3 @@
-
 <div id="gallery-modal-wrapper">
 
     <div class="amzs-sidebar">
@@ -8,11 +7,11 @@
             <li>
                 <a href="{{ path('amzs_admin_gallery_modal_route', {folderId: 0}) }}"
                    class="amzs-folder-item {{ currentFolderId == 0 ? 'active' : '' }}"
-                   data-turbo-frame="gallery_main_content">
+                   data-turbo-frame="gallery_main_content" data-modal-navigate="0">
                     <span><i class="bi bi-images me-2"></i>Tất cả ảnh</span>
                 </a>
             </li>
-            {% include '@AmzsGallery/gallery/_folder_tree.html.twig' with {
+            {% include '@AmzsGallery/gallery/_folder_tree_child.html.twig' with {
                 folders: sidebarFolders,
                 currentFolderId: currentFolderId
             } %}
@@ -30,6 +29,9 @@
         <span class="text-muted small" id="modal-selectedCount">Chưa chọn ảnh nào</span>
 
         <nav aria-label="Page navigation" id="amzs-pagination-wrapper">
+            <div class="navigation">
+                {{ knp_pagination_render(pictures) }}
+            </div>
         </nav>
     </div>
 

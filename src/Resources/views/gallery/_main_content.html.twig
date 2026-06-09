@@ -20,7 +20,7 @@
         {% if breadcrumbs|length == 0 %}
             <span class="amzs-breadcrumb-current">Thư viện</span>
         {% else %}
-            <a href="{{ path('amzs_admin_gallery_modal_route', {folderId: 0}) }}"
+            <a href="{{ path('amzs_admin_gallery_modal_route', {folderId: 0}) }}" data-modal-navigate="0"
                data-turbo-frame="gallery_main_content">Thư viện</a>
 
             {% for crumb in breadcrumbs %}
