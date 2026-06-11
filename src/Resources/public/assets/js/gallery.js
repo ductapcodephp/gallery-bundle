@@ -106,7 +106,14 @@ var GalleryIndex = (function () {
         // Xóa ảnh/thư mục được chọn
         var btnDeleteSelected = e.target.closest("#btnDeleteSelected");
         if (btnDeleteSelected && wrapper.contains(btnDeleteSelected)) {
-            if (!confirm("Bạn có chắc chắn muốn xóa các mục đã chọn?")) return;
+            var confirmed = await Alert.confirm("Bạn có chắc chắn muốn xóa các mục đã chọn?", {
+                title:       "Xóa mục đã chọn",
+                confirmText: "Xóa ngay",
+                cancelText:  "Hủy",
+                type:        "danger",
+            });
+            if (!confirmed) return;
+
             var selectedElements = wrapper.querySelectorAll(".gallery-item.selected");
             var currentFolderId  = getCurrentFolderId();
             try {
@@ -134,7 +141,7 @@ var GalleryIndex = (function () {
 
             } catch (err) {
                 console.error(err);
-                alert("Có lỗi xảy ra khi xóa!");
+                Alert.error("Có lỗi xảy ra khi xóa!");
             } finally {
                 btnDeleteSelected.disabled = false;
             }
@@ -229,7 +236,7 @@ var GalleryIndex = (function () {
 
         } catch (err) {
             console.error(err);
-            alert("Upload thất bại!");
+            Alert.error("Upload thất bại!");
         } finally {
             if (btnUpload) { btnUpload.disabled = false; btnUpload.innerHTML = originalHtml; }
         }
@@ -283,7 +290,7 @@ var GalleryIndex = (function () {
                 document.body.appendChild(modalContainer);
 
                 var modalElement = modalContainer.querySelector(".modal");
-                if (!modalElement) { alert("Không tìm thấy cấu trúc Modal!"); return; }
+                if (!modalElement) { Alert.error("Không tìm thấy cấu trúc Modal!"); return; }
 
                 var modalInstance = new bootstrap.Modal(modalElement);
                 modalInstance.show();
@@ -318,7 +325,7 @@ var GalleryIndex = (function () {
                                 );
                             })
                             .catch(function (err) {
-                                console.error(err); alert("Có lỗi xảy ra khi lưu!");
+                                console.error(err); Alert.error("Có lỗi xảy ra khi lưu!");
                                 if (submitBtn) {
                                     submitBtn.disabled = false;
                                     submitBtn.innerHTML = originalText;
@@ -333,7 +340,7 @@ var GalleryIndex = (function () {
             })
             .catch(function (err) {
                 console.error("Lỗi AJAX Modal:", err);
-                alert("Không thể tải form!");
+                Alert.error("Không thể tải form!");
             });
     }
 

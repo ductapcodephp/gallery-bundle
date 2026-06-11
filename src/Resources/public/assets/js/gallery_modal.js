@@ -314,7 +314,7 @@
                     ).then(function (r) { return r.json(); });
                 }))
                     .then(function () { input.value = ""; _load(folderId); })
-                    .catch(function (err) { alert("Upload thất bại!"); console.error(err); })
+                    .catch(function (err) { Alert.error("Upload thất bại!"); console.error(err); })
                     .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = orig; } });
             });
         }
@@ -324,29 +324,36 @@
 
     // Xóa hàng loạt
     function _deleteSelected(btn) {
-        if (!confirm("Bạn có chắc chắn muốn xóa các mục đã chọn?")) return;
-        var body     = document.getElementById(BODY_ID);
-        var selected = Array.from(body.querySelectorAll(".gallery-item.selected"));
-        var folderId = _getFolderId();
-        btn.disabled = true;
-        Promise.all(selected.map(function (el) {
-            var url = el.dataset.type === "picture"
-                ? Routing.generate('amzs_admin_gallery_delete_picture_route', {
-                    id: folderId,
-                    galleryPictureId: el.dataset.id
-                })
-                : Routing.generate('amzs_admin_gallery_delete_route', {
-                    id: el.dataset.id
-                });
+        Alert.confirm("Bạn có chắc chắn muốn xóa các mục đã chọn?", {
+            title:       "Xóa mục đã chọn",
+            confirmText: "Xóa ngay",
+            cancelText:  "Hủy",
+            type:        "danger",
+            onConfirm: function () {
+                var body     = document.getElementById(BODY_ID);
+                var selected = Array.from(body.querySelectorAll(".gallery-item.selected"));
+                var folderId = _getFolderId();
+                btn.disabled = true;
+                Promise.all(selected.map(function (el) {
+                    var url = el.dataset.type === "picture"
+                        ? Routing.generate('amzs_admin_gallery_delete_picture_route', {
+                            id: folderId,
+                            galleryPictureId: el.dataset.id
+                        })
+                        : Routing.generate('amzs_admin_gallery_delete_route', {
+                            id: el.dataset.id
+                        });
 
-            return fetch(url, {
-                method: "DELETE",
-                headers: { "X-Requested-With": "XMLHttpRequest" }
-            }).then(function (r) { return r.json(); });
-        }))
-            .then(function () { _load(folderId); })
-            .catch(function (err) { alert("Có lỗi xảy ra khi xóa!"); console.error(err); })
-            .finally(function () { btn.disabled = false; });
+                    return fetch(url, {
+                        method: "DELETE",
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    }).then(function (r) { return r.json(); });
+                }))
+                    .then(function () { _load(folderId); })
+                    .catch(function (err) { Alert.error("Có lỗi xảy ra khi xóa!"); console.error(err); })
+                    .finally(function () { btn.disabled = false; });
+            }
+        });
     }
 
     // add/edit
@@ -365,7 +372,7 @@
                 document.body.appendChild(w);
 
                 var el = w.querySelector(".modal");
-                if (!el) { alert("Không tìm thấy cấu trúc Modal!"); return; }
+                if (!el) { Alert.error("Không tìm thấy cấu trúc Modal!"); return; }
 
                 var inst = new bootstrap.Modal(el);
                 inst.show();
@@ -388,14 +395,14 @@
                             })
                             .then(function () { inst.hide(); _load(_getFolderId()); })
                             .catch(function (err) {
-                                alert("Có lỗi xảy ra khi lưu!"); console.error(err);
+                                Alert.error("Có lỗi xảy ra khi lưu!"); console.error(err);
                                 if (btn) { btn.disabled = false; btn.innerHTML = orig; }
                             });
                     });
                 }
                 el.addEventListener("hidden.bs.modal", function () { w.remove(); });
             })
-            .catch(function (err) { alert("Không thể tải form!"); console.error(err); });
+            .catch(function (err) { Alert.error("Không thể tải form!"); console.error(err); });
     }
 
     // xác nhận chọn ảnh
